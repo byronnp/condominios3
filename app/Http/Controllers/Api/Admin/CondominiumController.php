@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
+use App\Models\Condominium\Condominium;
+use App\Transformers\CondominiumTransformer;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class CondominiumController extends Controller
+{
+    use AuthorizesCondominiumAccess;
+
+    public function index(Request $request): JsonResponse
+    {
+        return $this->responder
+            ->success($this->scopeCondominiumsFor($request->user(), Condominium::query())
+                ->latest()
+                ->paginate(20), [CondominiumTransformer::class, 'transform'])
+            ->message('Condominios obtenidos correctamente.')
+            ->respond();
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        if (! $request->user()->isSeniorAdmin()) {
+            return $this->responder->error('Solo el administrador senior puede crear condominios.', 403)->respond();
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        return $this->responder
+            ->success(Condominium::query()->create($data), [CondominiumTransformer::class, 'transform'], 201)
+            ->message('Condominio creado correctamente.')
+            ->respond();
+    }
+
+    public function show(Request $request, Condominium $condominium): JsonResponse
+    {
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
+
+        return $this->responder
+            ->success($condominium->loadCount('houses'), [CondominiumTransformer::class, 'transform'])
+            ->message('Condominio obtenido correctamente.')
+            ->respond();
+    }
+
+    public function update(Request $request, Condominium $condominium): JsonResponse
+    {
+        if (! $request->user()->isSeniorAdmin()) {
+            return $this->responder->error('Solo el administrador senior puede editar condominios.', 403)->respond();
+        }
+
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $condominium->update($data);
+
+        return $this->responder
+            ->success($condominium, [CondominiumTransformer::class, 'transform'])
+            ->message('Condominio actualizado correctamente.')
+            ->respond();
+    }
+}
