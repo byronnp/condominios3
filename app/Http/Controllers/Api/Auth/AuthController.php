@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\UserSession;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use App\Services\JwtService;
 use App\Transformers\UserTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 
 class AuthController extends Controller
 {
@@ -54,7 +57,7 @@ class AuthController extends Controller
             ->respond();
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, AuditLogger $audit): JsonResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -87,13 +90,24 @@ class AuthController extends Controller
             'last_active_at' => $now,
         ])->save();
 
+        $audit->record(
+            action: 'auth.login',
+            module: 'auth',
+            user: $user,
+            entity: $session,
+            description: 'Inicio de sesion correcto.',
+            request: $request,
+        );
+
+        $token = $this->jwt->make($user, $session->token_id);
+
         return $this->responder->success([
-            'access_token' => $this->jwt->make($user, $session->token_id),
+            'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => config('jwt.ttl_minutes') * 60,
-            'user' => UserTransformer::transform($user->load('identificationType')),
-            'session' => $this->sessionPayload($session),
-        ])->message('Login realizado correctamente.')->respond();
+        ])->message('Login realizado correctamente.')
+            ->respond()
+            ->withCookie($this->authCookie($token));
     }
 
     public function me(Request $request): JsonResponse
@@ -104,7 +118,7 @@ class AuthController extends Controller
         ])->message('Usuario autenticado.')->respond();
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request, AuditLogger $audit): JsonResponse
     {
         $session = $request->attributes->get('auth_session');
         $now = Carbon::now();
@@ -117,10 +131,39 @@ class AuthController extends Controller
             ])->save();
         }
 
+        $audit->record(
+            action: 'auth.logout',
+            module: 'auth',
+            user: $request->user(),
+            entity: $session instanceof UserSession ? $session : null,
+            description: 'Sesion cerrada correctamente.',
+            request: $request,
+        );
+
         return $this->responder
             ->success()
             ->message('Sesion cerrada correctamente.')
-            ->respond();
+            ->respond()
+            ->withCookie(Cookie::forget(
+                config('jwt.cookie.name'),
+                config('jwt.cookie.path'),
+                config('jwt.cookie.domain'),
+            ));
+    }
+
+    private function authCookie(string $token): SymfonyCookie
+    {
+        return Cookie::make(
+            name: config('jwt.cookie.name'),
+            value: $token,
+            minutes: config('jwt.ttl_minutes'),
+            path: config('jwt.cookie.path'),
+            domain: config('jwt.cookie.domain'),
+            secure: config('jwt.cookie.secure'),
+            httpOnly: config('jwt.cookie.http_only'),
+            raw: false,
+            sameSite: config('jwt.cookie.same_site'),
+        );
     }
 
     private function sessionPayload(?UserSession $session): ?array

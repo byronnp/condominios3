@@ -10,7 +10,10 @@ class CustomFieldTransformer
     {
         return [
             'id' => $field->id,
-            'condominium_id' => $field->condominium_id,
+            'condominium_id' => [
+                'id' => $field->condominium_id,
+                'name' => $field->condominium?->name,
+            ],
             'entity_type' => $field->entity_type,
             'field_key' => $field->field_key,
             'label' => $field->label,

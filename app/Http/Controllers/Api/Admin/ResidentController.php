@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
+use App\Http\Controllers\Controller;
+use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\House;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use App\Transformers\UserTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +18,7 @@ class ResidentController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, AuditLogger $audit): JsonResponse
     {
         $existingUser = User::query()->where('email', $request->input('email'))->first();
 
@@ -35,7 +37,7 @@ class ResidentController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'house_id' => ['required', 'exists:houses,id'],
-            'relationship' => ['required', Rule::in(['owner', 'spouse', 'family', 'tenant', 'representative'])],
+            'relationship_type_id' => ['required', 'exists:catalog_items,id'],
             'is_primary' => ['sometimes', 'boolean'],
             'can_view_balance' => ['sometimes', 'boolean'],
             'can_view_payments' => ['sometimes', 'boolean'],
@@ -46,6 +48,8 @@ class ResidentController extends Controller
 
         $house = House::query()->findOrFail($data['house_id']);
         $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_residents');
+        $relationshipType = $this->relationshipType($data['relationship_type_id'], ['owner', 'spouse', 'family', 'tenant', 'representative']);
+        $isOwner = $relationshipType->code === 'owner';
 
         $user = User::query()->firstOrCreate(
             ['email' => $data['email']],
@@ -77,21 +81,50 @@ class ResidentController extends Controller
 
         $house->users()->syncWithoutDetaching([
             $user->id => [
-                'relationship' => $data['relationship'],
-                'is_primary' => $data['is_primary'] ?? $data['relationship'] === 'owner',
+                'relationship_type_id' => $relationshipType->id,
+                'is_primary' => $data['is_primary'] ?? $isOwner,
                 'can_view_balance' => $data['can_view_balance'] ?? true,
                 'can_view_payments' => $data['can_view_payments'] ?? true,
-                'can_make_payments' => $data['can_make_payments'] ?? $data['relationship'] === 'owner',
+                'can_make_payments' => $data['can_make_payments'] ?? $isOwner,
                 'can_receive_notifications' => $data['can_receive_notifications'] ?? true,
-                'can_invite_users' => $data['can_invite_users'] ?? $data['relationship'] === 'owner',
+                'can_invite_users' => $data['can_invite_users'] ?? $isOwner,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $request->user()->id,
             ],
         ]);
 
+        $audit->record(
+            action: 'resident.assigned',
+            module: 'residents',
+            condominiumId: $house->condominium_id,
+            user: $request->user(),
+            entity: $user,
+            description: 'Residente '.$user->name.' asignado a casa '.$house->code.'.',
+            newValues: [
+                'resident_id' => $user->id,
+                'house_id' => $house->id,
+                'house_code' => $house->code,
+                'relationship_type' => $relationshipType->name,
+                'is_primary' => $data['is_primary'] ?? $isOwner,
+            ],
+            request: $request,
+        );
+
         return $this->responder
             ->success($user->load(['houses', 'identificationType']), [UserTransformer::class, 'transform'], 201)
             ->message('Residente asignado a la casa correctamente.')
             ->respond();
+    }
+
+    /**
+     * @param  list<string>  $allowedCodes
+     */
+    private function relationshipType(int $id, array $allowedCodes): CatalogItem
+    {
+        return CatalogItem::query()
+            ->whereKey($id)
+            ->whereIn('code', $allowedCodes)
+            ->whereHas('catalog', fn ($query) => $query->where('code', 'house_relationship_types'))
+            ->firstOrFail();
     }
 }

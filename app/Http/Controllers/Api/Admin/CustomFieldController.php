@@ -20,7 +20,7 @@ class CustomFieldController extends Controller
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
 
         return $this->responder
-            ->success($condominium->customFields()->with('optionsCatalog')->orderBy('sort_order')->get(), [CustomFieldTransformer::class, 'transform'])
+            ->success($condominium->customFields()->with(['optionsCatalog', 'condominium'])->orderBy('sort_order')->get(), [CustomFieldTransformer::class, 'transform'])
             ->message('Campos personalizados obtenidos correctamente.')
             ->respond();
     }
@@ -41,7 +41,7 @@ class CustomFieldController extends Controller
         ]);
 
         return $this->responder
-            ->success($condominium->customFields()->create($data), [CustomFieldTransformer::class, 'transform'], 201)
+            ->success($condominium->customFields()->create($data)->load('condominium'), [CustomFieldTransformer::class, 'transform'], 201)
             ->message('Campo personalizado creado correctamente.')
             ->respond();
     }
@@ -62,7 +62,7 @@ class CustomFieldController extends Controller
         $customField->update($data);
 
         return $this->responder
-            ->success($customField, [CustomFieldTransformer::class, 'transform'])
+            ->success($customField->load('condominium'), [CustomFieldTransformer::class, 'transform'])
             ->message('Campo personalizado actualizado correctamente.')
             ->respond();
     }

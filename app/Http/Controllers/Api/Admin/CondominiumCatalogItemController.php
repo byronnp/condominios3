@@ -19,7 +19,12 @@ class CondominiumCatalogItemController extends Controller
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
 
         return $this->responder
-            ->success($condominium->catalogItems()->with('catalog')->orderByPivot('sort_order')->get(), [CatalogItemTransformer::class, 'transform'])
+            ->success($condominium->catalogItems()
+                ->with('catalog')
+                ->when($request->input('catalog'), fn ($query, $catalog) => $query->whereHas('catalog', fn ($catalogQuery) => $catalogQuery->where('code', $catalog)))
+                ->when($request->boolean('enabled'), fn ($query) => $query->wherePivot('is_enabled', true))
+                ->orderByPivot('sort_order')
+                ->get(), [CatalogItemTransformer::class, 'transform'])
             ->message('Items de catalogo del condominio obtenidos correctamente.')
             ->respond();
     }

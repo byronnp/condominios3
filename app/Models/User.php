@@ -3,17 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use App\Models\Auth\UserSession;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\Condominium;
 use App\Models\Condominium\House;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -37,7 +37,9 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     public const ROLE_SENIOR_ADMIN = 'senior_admin';
+
     public const ROLE_CONDOMINIUM_ADMIN = 'condominium_admin';
+
     public const ROLE_RESIDENT = 'resident';
 
     /** @use HasFactory<UserFactory> */
@@ -74,7 +76,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(House::class)
             ->withPivot([
-                'relationship',
+                'relationship_type_id',
                 'can_view_balance',
                 'can_view_payments',
                 'can_make_payments',

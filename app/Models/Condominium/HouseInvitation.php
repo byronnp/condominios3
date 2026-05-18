@@ -2,6 +2,7 @@
 
 namespace App\Models\Condominium;
 
+use App\Models\Catalog\CatalogItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'house_id',
     'email',
-    'relationship',
+    'relationship_type_id',
     'token',
     'can_view_balance',
     'can_view_payments',
@@ -51,5 +52,10 @@ class HouseInvitation extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    public function relationshipType(): BelongsTo
+    {
+        return $this->belongsTo(CatalogItem::class, 'relationship_type_id');
     }
 }

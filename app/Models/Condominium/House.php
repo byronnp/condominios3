@@ -4,6 +4,7 @@ namespace App\Models\Condominium;
 
 use App\Models\Billing\FeeCharge;
 use App\Models\Billing\Payment;
+use App\Models\Billing\PaymentBatch;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +34,7 @@ class House extends Model
     {
         return $this->belongsToMany(User::class)
             ->withPivot([
-                'relationship',
+                'relationship_type_id',
                 'can_view_balance',
                 'can_view_payments',
                 'can_make_payments',
@@ -56,8 +57,39 @@ class House extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function paymentBatches(): HasMany
+    {
+        return $this->hasMany(PaymentBatch::class);
+    }
+
     public function invitations(): HasMany
     {
         return $this->hasMany(HouseInvitation::class);
+    }
+
+    public static function generateCode(Condominium $condominium, string $houseNumber): string
+    {
+        $normalizedHouseNumber = self::formatHouseNumber($houseNumber);
+        $initials = collect(preg_split('/\s+/', trim($condominium->name)) ?: [])
+            ->filter(fn ($part) => $part !== '' && ! in_array(mb_strtolower($part), ['condominio', 'condominium'], true))
+            ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->implode('');
+
+        if ($initials === '') {
+            $initials = mb_strtoupper(mb_substr($condominium->name, 0, 2));
+        }
+
+        return $condominium->id.'-'.$normalizedHouseNumber.'-'.$initials;
+    }
+
+    private static function formatHouseNumber(string $houseNumber): string
+    {
+        $trimmed = trim($houseNumber);
+
+        if (preg_match('/^\d+$/', $trimmed) !== 1) {
+            return $trimmed;
+        }
+
+        return str_pad($trimmed, 2, '0', STR_PAD_LEFT);
     }
 }

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
+use App\Http\Controllers\Controller;
 use App\Models\Billing\FeeCharge;
+use App\Models\Condominium\Condominium;
 use App\Models\Condominium\House;
+use App\Services\Audit\AuditLogger;
+use App\Services\Billing\MonthlyFeeChargeGenerator;
 use App\Transformers\FeeChargeTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,7 +36,7 @@ class FeeChargeController extends Controller
             ->respond();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, AuditLogger $audit): JsonResponse
     {
         $data = $request->validate([
             'house_id' => ['required', 'exists:houses,id'],
@@ -57,9 +60,57 @@ class FeeChargeController extends Controller
             'status' => 'pending',
         ]);
 
+        $audit->record(
+            action: 'fee_charge.created',
+            module: 'billing',
+            condominiumId: $house->condominium_id,
+            user: $request->user(),
+            entity: $charge,
+            description: 'Alicuota creada manualmente para casa '.$house->code.'.',
+            newValues: [
+                'period' => $charge->period,
+                'amount' => $charge->amount,
+                'house_code' => $house->code,
+            ],
+            request: $request,
+        );
+
         return $this->responder
             ->success($charge, [FeeChargeTransformer::class, 'transform'], 201)
             ->message('Alicuota creada correctamente.')
+            ->respond();
+    }
+
+    public function generateMonth(Request $request, MonthlyFeeChargeGenerator $generator, AuditLogger $audit): JsonResponse
+    {
+        $data = $request->validate([
+            'condominium_id' => ['required', 'exists:condominiums,id'],
+            'period' => ['required', 'date_format:Y-m'],
+            'due_date' => ['nullable', 'date'],
+        ]);
+
+        $condominium = Condominium::query()->findOrFail($data['condominium_id']);
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_fees');
+
+        $result = $generator->generateForCondominium(
+            $condominium,
+            $data['period'],
+            $data['due_date'] ?? null,
+        );
+
+        $audit->record(
+            action: 'fee_charge.generated',
+            module: 'billing',
+            condominiumId: $condominium->id,
+            user: $request->user(),
+            description: 'Alicuotas mensuales generadas para periodo '.$data['period'].'.',
+            newValues: $result,
+            request: $request,
+        );
+
+        return $this->responder
+            ->success($result)
+            ->message('Alicuotas mensuales generadas correctamente.')
             ->respond();
     }
 }

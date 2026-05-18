@@ -12,7 +12,10 @@ class HouseInvitationTransformer
             'id' => $invitation->id,
             'house_id' => $invitation->house_id,
             'email' => $invitation->email,
-            'relationship' => $invitation->relationship,
+            'relationship_type' => $invitation->relationshipType ? [
+                'id' => $invitation->relationshipType->id,
+                'name' => $invitation->relationshipType->name,
+            ] : null,
             'token' => $invitation->token,
             'can_view_balance' => $invitation->can_view_balance,
             'can_view_payments' => $invitation->can_view_payments,

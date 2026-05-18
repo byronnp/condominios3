@@ -13,6 +13,24 @@ use Illuminate\Validation\Rule;
 
 class CondominiumAdminController extends Controller
 {
+    public function all(Request $request): JsonResponse
+    {
+        if (! $request->user()->isSeniorAdmin()) {
+            return $this->responder->error('Solo el administrador senior puede ver todos los administradores.', 403)->respond();
+        }
+
+        $admins = User::query()
+            ->where('role', User::ROLE_CONDOMINIUM_ADMIN)
+            ->with(['identificationType', 'managedCondominiums'])
+            ->orderBy('name')
+            ->paginate(20);
+
+        return $this->responder
+            ->success($admins, [UserTransformer::class, 'transform'])
+            ->message('Administradores de condominios obtenidos correctamente.')
+            ->respond();
+    }
+
     public function index(Request $request, Condominium $condominium): JsonResponse
     {
         if (! $request->user()->isSeniorAdmin()) {

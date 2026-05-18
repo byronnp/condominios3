@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
+use App\Http\Controllers\Controller;
 use App\Models\Condominium\Condominium;
+use App\Models\Condominium\House;
 use App\Transformers\CondominiumTransformer;
+use App\Transformers\HouseTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,8 +17,23 @@ class CondominiumController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        if (! $request->user()->isSeniorAdmin()) {
+            $houses = House::query()
+                ->with('condominium')
+                ->whereIn('condominium_id', $this->managedCondominiumIds($request->user()))
+                ->orderBy('code')
+                ->paginate(20);
+
+            return $this->responder
+                ->success($houses, [HouseTransformer::class, 'transform'])
+                ->message('Casas del condominio obtenidas correctamente.')
+                ->respond();
+        }
+
         return $this->responder
             ->success($this->scopeCondominiumsFor($request->user(), Condominium::query())
+                ->with('houses')
+                ->withCount('houses')
                 ->latest()
                 ->paginate(20), [CondominiumTransformer::class, 'transform'])
             ->message('Condominios obtenidos correctamente.')
@@ -46,7 +63,7 @@ class CondominiumController extends Controller
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
 
         return $this->responder
-            ->success($condominium->loadCount('houses'), [CondominiumTransformer::class, 'transform'])
+            ->success($condominium->load('houses')->loadCount('houses'), [CondominiumTransformer::class, 'transform'])
             ->message('Condominio obtenido correctamente.')
             ->respond();
     }

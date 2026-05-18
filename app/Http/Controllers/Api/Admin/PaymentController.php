@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
+use App\Http\Controllers\Controller;
 use App\Models\Billing\FeeCharge;
 use App\Models\Billing\Payment;
+use App\Services\Audit\AuditLogger;
+use App\Services\Billing\PaymentMethodResolver;
 use App\Transformers\PaymentTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +21,7 @@ class PaymentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $payments = Payment::query()
-            ->with(['house.condominium', 'feeCharge', 'registeredBy'])
+            ->with(['house.condominium', 'feeCharge', 'registeredBy', 'paymentMethod', 'condominiumPaymentMethod.paymentMethod'])
             ->when(! $request->user()->isSeniorAdmin(), function ($query) use ($request): void {
                 $query->whereHas('house', fn ($houseQuery) => $houseQuery->whereIn('condominium_id', $this->managedCondominiumIds($request->user())));
             })
@@ -33,21 +35,22 @@ class PaymentController extends Controller
             ->respond();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, PaymentMethodResolver $paymentMethodResolver, AuditLogger $audit): JsonResponse
     {
         $data = $request->validate([
             'fee_charge_id' => ['required', 'exists:fee_charges,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'paid_at' => ['nullable', 'date'],
-            'payment_method' => ['nullable', 'string', 'max:40'],
+            'condominium_payment_method_id' => ['nullable', 'exists:condominium_payment_methods,id'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $charge = FeeCharge::query()->with('house')->findOrFail($data['fee_charge_id']);
+        $charge = FeeCharge::query()->with('house.condominium')->findOrFail($data['fee_charge_id']);
         $this->abortUnlessCanManageCondominium($request->user(), $charge->house->condominium_id, 'can_manage_payments');
+        $paymentMethod = $paymentMethodResolver->resolve($data['condominium_payment_method_id'] ?? null, $charge->house->condominium);
 
-        $payment = DB::transaction(function () use ($data, $request): Payment {
+        $payment = DB::transaction(function () use ($data, $paymentMethod, $request): Payment {
             $charge = FeeCharge::query()->lockForUpdate()->findOrFail($data['fee_charge_id']);
 
             if ((float) $data['amount'] > (float) $charge->balance) {
@@ -60,7 +63,8 @@ class PaymentController extends Controller
                 'registered_by' => $request->user()->id,
                 'amount' => $data['amount'],
                 'paid_at' => $data['paid_at'] ?? Carbon::now(),
-                'payment_method' => $data['payment_method'] ?? null,
+                'payment_method_id' => $paymentMethod?->payment_method_id,
+                'condominium_payment_method_id' => $paymentMethod?->id,
                 'reference' => $data['reference'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
@@ -77,8 +81,28 @@ class PaymentController extends Controller
             return $payment;
         });
 
+        $payment->load(['feeCharge', 'house', 'paymentMethod', 'condominiumPaymentMethod.paymentMethod']);
+        $audit->record(
+            action: 'payment.created',
+            module: 'payments',
+            condominiumId: $payment->house?->condominium_id,
+            user: $request->user(),
+            entity: $payment,
+            description: 'Pago registrado para casa '.$payment->house?->code.'.',
+            newValues: [
+                'amount' => $payment->amount,
+                'period' => $payment->feeCharge?->period,
+                'house_code' => $payment->house?->code,
+            ],
+            metadata: [
+                'reference' => $payment->reference,
+                'payment_method' => $payment->condominiumPaymentMethod?->display_name ?? $payment->paymentMethod?->name,
+            ],
+            request: $request,
+        );
+
         return $this->responder
-            ->success($payment->load('feeCharge'), [PaymentTransformer::class, 'transform'], 201)
+            ->success($payment, [PaymentTransformer::class, 'transform'], 201)
             ->message('Pago registrado correctamente.')
             ->respond();
     }

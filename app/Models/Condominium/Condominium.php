@@ -2,6 +2,8 @@
 
 namespace App\Models\Condominium;
 
+use App\Models\Billing\CondominiumFeeRate;
+use App\Models\Billing\CondominiumPaymentMethod;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Catalog\CustomField;
 use App\Models\User;
@@ -59,5 +61,15 @@ class Condominium extends Model
     public function customFields(): HasMany
     {
         return $this->hasMany(CustomField::class);
+    }
+
+    public function feeRates(): HasMany
+    {
+        return $this->hasMany(CondominiumFeeRate::class);
+    }
+
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(CondominiumPaymentMethod::class);
     }
 }

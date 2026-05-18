@@ -39,6 +39,30 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        $relationshipTypes = Catalog::query()->updateOrCreate([
+            'code' => 'house_relationship_types',
+        ], [
+            'name' => 'Tipos de relacion con casa',
+            'description' => 'Catalogo global para propietarios, familiares, arrendatarios y representantes.',
+            'is_active' => true,
+        ]);
+
+        foreach ([
+            ['code' => 'owner', 'name' => 'Propietario', 'sort_order' => 1],
+            ['code' => 'spouse', 'name' => 'Conyuge', 'sort_order' => 2],
+            ['code' => 'family', 'name' => 'Familiar', 'sort_order' => 3],
+            ['code' => 'tenant', 'name' => 'Arrendatario', 'sort_order' => 4],
+            ['code' => 'representative', 'name' => 'Representante', 'sort_order' => 5],
+        ] as $item) {
+            $relationshipTypes->items()->updateOrCreate([
+                'code' => $item['code'],
+            ], [
+                'name' => $item['name'],
+                'sort_order' => $item['sort_order'],
+                'is_active' => true,
+            ]);
+        }
+
         User::query()->updateOrCreate([
             'email' => env('ADMIN_EMAIL', 'admin@condominios.test'),
         ], [
@@ -54,6 +78,9 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $this->call(SampleDataSeeder::class);
+        $this->call([
+            MenuSeeder::class,
+            SampleDataSeeder::class,
+        ]);
     }
 }

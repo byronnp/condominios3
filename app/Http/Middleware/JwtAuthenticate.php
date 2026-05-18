@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
 use App\Models\Auth\UserSession;
+use App\Models\User;
 use App\Services\JwtService;
 use App\Support\ApiResponder;
 use Closure;
@@ -15,13 +15,11 @@ use Throwable;
 
 class JwtAuthenticate
 {
-    public function __construct(private readonly JwtService $jwt, private readonly ApiResponder $responder)
-    {
-    }
+    public function __construct(private readonly JwtService $jwt, private readonly ApiResponder $responder) {}
 
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken();
+        $token = $request->bearerToken() ?: $request->cookie(config('jwt.cookie.name'));
 
         if (! $token) {
             return $this->responder->error('Token no enviado.', 401)->respond();
