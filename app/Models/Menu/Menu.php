@@ -2,6 +2,7 @@
 
 namespace App\Models\Menu;
 
+use App\Models\Auth\Permission;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,8 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'icon',
     'sort_order',
     'is_active',
-    'required_role',
-    'required_permission',
+    'required_permission_id',
 ])]
 class Menu extends Model
 {
@@ -30,6 +30,11 @@ class Menu extends Model
             'is_active' => 'boolean',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function requiredPermission(): BelongsTo
+    {
+        return $this->belongsTo(Permission::class, 'required_permission_id');
     }
 
     public function parent(): BelongsTo

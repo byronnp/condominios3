@@ -15,7 +15,7 @@ class HousePaymentController extends Controller
 
     public function index(Request $request, House $house): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_payments');
+        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'payments.manage');
 
         $payments = $house->payments()
             ->with(['feeCharge', 'paymentMethod', 'condominiumPaymentMethod.paymentMethod'])

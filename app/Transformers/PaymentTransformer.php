@@ -3,6 +3,7 @@
 namespace App\Transformers;
 
 use App\Models\Billing\Payment;
+use App\Support\ResourceActions;
 
 class PaymentTransformer
 {
@@ -28,6 +29,7 @@ class PaymentTransformer
                 'status' => $payment->feeCharge->status,
                 'description' => $payment->feeCharge->description,
             ] : null,
+            'actions' => ResourceActions::payment($payment),
         ];
     }
 

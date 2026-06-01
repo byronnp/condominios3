@@ -18,7 +18,7 @@ class CondominiumPaymentMethodController extends Controller
 
     public function index(Request $request, Condominium $condominium): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_payments');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'payment_methods.manage');
 
         $methods = $condominium->paymentMethods()
             ->with(['condominium', 'paymentMethod'])
@@ -35,7 +35,7 @@ class CondominiumPaymentMethodController extends Controller
 
     public function store(Request $request, Condominium $condominium, AuditLogger $audit): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_payments');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'payment_methods.manage');
 
         $data = $request->validate([
             'payment_method_id' => ['required', 'exists:catalog_items,id'],
@@ -83,7 +83,7 @@ class CondominiumPaymentMethodController extends Controller
 
     public function update(Request $request, CondominiumPaymentMethod $condominiumPaymentMethod, AuditLogger $audit): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominiumPaymentMethod->condominium_id, 'can_manage_payments');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominiumPaymentMethod->condominium_id, 'payment_methods.manage');
 
         $data = $request->validate([
             'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],

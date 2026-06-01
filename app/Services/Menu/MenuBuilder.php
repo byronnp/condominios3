@@ -14,6 +14,7 @@ class MenuBuilder
     public function forUser(User $user): Collection
     {
         $menus = Menu::query()
+            ->with('requiredPermission')
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('label')
@@ -48,32 +49,33 @@ class MenuBuilder
 
     private function isAllowed(Menu $menu, User $user): bool
     {
-        if ($user->isSeniorAdmin()) {
+        if ($user->hasPermission('system.manage')) {
             return true;
         }
 
-        if ($menu->required_role && $menu->required_role !== $user->role) {
-            return false;
-        }
+        $permission = $menu->requiredPermission?->code;
 
-        if (! $menu->required_permission) {
+        if (! $permission) {
             return true;
         }
 
-        if ($user->isCondominiumAdmin()) {
-            return $user->managedCondominiums()
-                ->wherePivot($menu->required_permission, true)
-                ->wherePivotNotNull('approved_at')
-                ->exists();
+        if ($user->hasPermission($permission)) {
+            return true;
         }
 
-        if ($user->role === User::ROLE_RESIDENT) {
-            return $user->houses()
-                ->wherePivot($menu->required_permission, true)
-                ->wherePivotNotNull('approved_at')
-                ->exists();
+        $hasCondominiumPermission = $user->managedCondominiums()
+            ->wherePivotNotNull('approved_at')
+            ->get()
+            ->contains(fn ($condominium) => $user->hasPermission($permission, $condominium->id));
+
+        if ($hasCondominiumPermission) {
+            return true;
         }
 
-        return false;
+        return $user->houses()
+            ->wherePivotNotNull('approved_at')
+            ->get()
+            ->contains(fn ($house) => $user->hasHousePermission($permission, $house->id));
+
     }
 }

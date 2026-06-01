@@ -48,7 +48,7 @@ class CondominiumFeeRateController extends Controller
         }
 
         $condominium = Condominium::query()->findOrFail($data['condominium_id']);
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_fees');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'fees.manage');
 
         $isActive = $data['is_active'] ?? true;
 

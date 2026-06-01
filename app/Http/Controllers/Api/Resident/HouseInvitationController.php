@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auth\Role;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\House;
 use App\Models\Condominium\HouseInvitation;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class HouseInvitationController extends Controller
 {
@@ -37,11 +39,8 @@ class HouseInvitationController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'relationship_type_id' => ['required', 'exists:catalog_items,id'],
-            'can_view_balance' => ['sometimes', 'boolean'],
-            'can_view_payments' => ['sometimes', 'boolean'],
-            'can_make_payments' => ['sometimes', 'boolean'],
+            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'resident')->where('is_active', true)],
             'can_receive_notifications' => ['sometimes', 'boolean'],
-            'can_invite_users' => ['sometimes', 'boolean'],
         ]);
         $relationshipType = $this->relationshipType($data['relationship_type_id'], ['spouse', 'family', 'tenant', 'representative']);
 
@@ -49,12 +48,9 @@ class HouseInvitationController extends Controller
             'house_id' => $house->id,
             'email' => $data['email'],
             'relationship_type_id' => $relationshipType->id,
+            'role_id' => $data['role_id'] ?? Role::idForCode(Role::RESIDENT_VIEWER),
             'token' => (string) Str::uuid(),
-            'can_view_balance' => $data['can_view_balance'] ?? true,
-            'can_view_payments' => $data['can_view_payments'] ?? true,
-            'can_make_payments' => $data['can_make_payments'] ?? false,
             'can_receive_notifications' => $data['can_receive_notifications'] ?? true,
-            'can_invite_users' => $data['can_invite_users'] ?? false,
             'invited_by' => $request->user()->id,
             'expires_at' => Carbon::now()->addDays(7),
         ]);
@@ -96,11 +92,8 @@ class HouseInvitationController extends Controller
         $invitation->house->users()->syncWithoutDetaching([
             $request->user()->id => [
                 'relationship_type_id' => $invitation->relationship_type_id,
-                'can_view_balance' => $invitation->can_view_balance,
-                'can_view_payments' => $invitation->can_view_payments,
-                'can_make_payments' => $invitation->can_make_payments,
+                'role_id' => $invitation->role_id ?? Role::idForCode(Role::RESIDENT_VIEWER),
                 'can_receive_notifications' => $invitation->can_receive_notifications,
-                'can_invite_users' => $invitation->can_invite_users,
                 'is_primary' => false,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $invitation->invited_by,
@@ -135,24 +128,20 @@ class HouseInvitationController extends Controller
     private function canInvite(Request $request, House $house): bool
     {
         if ($request->user()->isAdmin()) {
-            if ($request->user()->isSeniorAdmin()) {
+            if ($request->user()->hasPermission('system.manage')) {
                 return true;
             }
 
-            return $request->user()
-                ->managedCondominiums()
-                ->where('condominiums.id', $house->condominium_id)
-                ->wherePivot('can_manage_invitations', true)
-                ->wherePivotNotNull('approved_at')
-                ->exists();
+            return $request->user()->hasPermission('invitations.manage', $house->condominium_id);
         }
 
-        return $request->user()
+        $membership = $request->user()
             ->houses()
             ->where('houses.id', $house->id)
-            ->wherePivot('can_invite_users', true)
             ->wherePivotNotNull('approved_at')
             ->exists();
+
+        return $membership && $request->user()->hasHousePermission('resident.invitations.create', $house->id);
     }
 
     /**

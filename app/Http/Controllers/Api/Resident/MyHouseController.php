@@ -26,7 +26,7 @@ class MyHouseController extends Controller
     {
         $membership = $this->membership($request, $house);
 
-        if (! $membership || ! $membership->pivot->can_view_balance) {
+        if (! $membership || ! $request->user()->hasHousePermission('resident.balance.view', $house->id)) {
             return $this->responder->error('No autorizado para ver el saldo pendiente de esta casa.', 403)->respond();
         }
 

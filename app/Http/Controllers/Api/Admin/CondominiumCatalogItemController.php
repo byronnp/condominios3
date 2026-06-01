@@ -16,7 +16,7 @@ class CondominiumCatalogItemController extends Controller
 
     public function index(Request $request, Condominium $condominium): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
         return $this->responder
             ->success($condominium->catalogItems()
@@ -31,7 +31,7 @@ class CondominiumCatalogItemController extends Controller
 
     public function store(Request $request, Condominium $condominium): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
         $data = $request->validate([
             'catalog_item_id' => ['required', 'exists:catalog_items,id'],

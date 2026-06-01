@@ -3,6 +3,7 @@
 namespace App\Transformers;
 
 use App\Models\Billing\PaymentBatch;
+use App\Support\ResourceActions;
 
 class PaymentBatchTransformer
 {
@@ -20,6 +21,7 @@ class PaymentBatchTransformer
             'payments' => $batch->relationLoaded('payments')
                 ? $batch->payments->map(fn ($payment) => PaymentTransformer::transform($payment))->values()
                 : null,
+            'actions' => ResourceActions::paymentBatch($batch),
         ];
     }
 

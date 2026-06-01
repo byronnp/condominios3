@@ -2,15 +2,50 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auth\Permission;
+use App\Models\Auth\Role;
 use App\Models\Catalog\Catalog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        foreach (Role::defaults() as $role) {
+            Role::query()->updateOrCreate([
+                'code' => $role['code'],
+            ], [
+                'name' => $role['name'],
+                'scope' => match ($role['code']) {
+                    Role::SENIOR_ADMIN => Permission::SCOPE_SYSTEM,
+                    Role::RESIDENT => Permission::SCOPE_SYSTEM,
+                    default => Permission::SCOPE_CONDOMINIUM,
+                },
+                'is_system' => true,
+                'is_active' => $role['is_active'],
+            ]);
+        }
+
+        foreach (Permission::defaults() as $permission) {
+            Permission::query()->updateOrCreate([
+                'code' => $permission['code'],
+            ], [
+                'name' => $permission['name'],
+                'group' => $permission['group'],
+                'scope' => $permission['scope'],
+                'description' => $permission['description'] ?? null,
+                'is_active' => $permission['is_active'],
+            ]);
+        }
+
+        $this->seedResidentOperationalRoles();
+        $this->syncDefaultRolePermissions();
+        $this->syncLegacyHouseRoles();
+
         $identificationTypes = Catalog::query()->updateOrCreate([
             'code' => 'identification_types',
         ], [
@@ -63,6 +98,29 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $condominiumStatuses = Catalog::query()->updateOrCreate([
+            'code' => 'condominium_statuses',
+        ], [
+            'name' => 'Estados de condominios',
+            'description' => 'Catalogo global para controlar el estado operativo de los condominios.',
+            'is_active' => true,
+        ]);
+
+        foreach ([
+            ['code' => 'active', 'name' => 'Activo', 'sort_order' => 1],
+            ['code' => 'pending', 'name' => 'Pendiente', 'sort_order' => 2],
+            ['code' => 'in_review', 'name' => 'En revision', 'sort_order' => 3],
+            ['code' => 'inactive', 'name' => 'Inactivo', 'sort_order' => 4],
+        ] as $item) {
+            $condominiumStatuses->items()->updateOrCreate([
+                'code' => $item['code'],
+            ], [
+                'name' => $item['name'],
+                'sort_order' => $item['sort_order'],
+                'is_active' => true,
+            ]);
+        }
+
         User::query()->updateOrCreate([
             'email' => env('ADMIN_EMAIL', 'admin@condominios.test'),
         ], [
@@ -82,5 +140,111 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             SampleDataSeeder::class,
         ]);
+
+        $this->syncDefaultRolePermissions();
+    }
+
+    private function syncDefaultRolePermissions(): void
+    {
+        $permissions = Permission::query()->pluck('id', 'code');
+
+        $seniorAdmin = Role::query()->where('code', Role::SENIOR_ADMIN)->first();
+        $condominiumAdmin = Role::query()->where('code', Role::CONDOMINIUM_ADMIN)->first();
+        $resident = Role::query()->where('code', Role::RESIDENT)->first();
+        $residentOwner = Role::query()->where('code', Role::RESIDENT_OWNER)->first();
+        $residentPayer = Role::query()->where('code', Role::RESIDENT_PAYER)->first();
+        $residentViewer = Role::query()->where('code', Role::RESIDENT_VIEWER)->first();
+
+        $seniorAdmin?->permissions()->sync($permissions->values()->all());
+
+        $condominiumAdmin?->permissions()->sync($permissions->only([
+            'admin.access',
+            'houses.manage',
+            'residents.manage',
+            'fees.manage',
+            'payments.manage',
+            'payment_methods.manage',
+            'invitations.manage',
+            'audit_logs.view',
+        ])->values()->all());
+
+        $resident?->permissions()->sync($permissions->only([
+            'resident.access',
+        ])->values()->all());
+
+        $residentOwner?->permissions()->sync($permissions->only([
+            'resident.balance.view',
+            'resident.payments.view',
+            'resident.payments.create',
+            'resident.invitations.create',
+        ])->values()->all());
+
+        $residentPayer?->permissions()->sync($permissions->only([
+            'resident.balance.view',
+            'resident.payments.view',
+            'resident.payments.create',
+        ])->values()->all());
+
+        $residentViewer?->permissions()->sync($permissions->only([
+            'resident.balance.view',
+            'resident.payments.view',
+        ])->values()->all());
+    }
+
+    private function seedResidentOperationalRoles(): void
+    {
+        foreach ([
+            ['code' => Role::RESIDENT_OWNER, 'name' => 'Residente propietario'],
+            ['code' => Role::RESIDENT_PAYER, 'name' => 'Residente con pagos'],
+            ['code' => Role::RESIDENT_VIEWER, 'name' => 'Residente lector'],
+        ] as $role) {
+            Role::query()->updateOrCreate([
+                'code' => $role['code'],
+            ], [
+                'name' => $role['name'],
+                'scope' => Permission::SCOPE_RESIDENT,
+                'is_system' => false,
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    private function syncLegacyHouseRoles(): void
+    {
+        if (! Schema::hasColumn('house_user', 'can_make_payments')) {
+            return;
+        }
+
+        $ownerRoleId = Role::idForCode(Role::RESIDENT_OWNER);
+        $payerRoleId = Role::idForCode(Role::RESIDENT_PAYER);
+        $viewerRoleId = Role::idForCode(Role::RESIDENT_VIEWER);
+
+        if ($ownerRoleId) {
+            DB::table('house_user')
+                ->where(fn ($query) => $query
+                    ->where('can_invite_users', true)
+                    ->orWhere('is_primary', true))
+                ->update(['role_id' => $ownerRoleId]);
+        }
+
+        if ($payerRoleId) {
+            DB::table('house_user')
+                ->where('can_make_payments', true)
+                ->where('can_invite_users', false)
+                ->where('is_primary', false)
+                ->update(['role_id' => $payerRoleId]);
+        }
+
+        if ($viewerRoleId) {
+            DB::table('house_user')
+                ->where('can_make_payments', false)
+                ->where('can_invite_users', false)
+                ->where('is_primary', false)
+                ->update(['role_id' => $viewerRoleId]);
+
+            DB::table('house_invitations')
+                ->whereNull('accepted_at')
+                ->update(['role_id' => $viewerRoleId]);
+        }
     }
 }

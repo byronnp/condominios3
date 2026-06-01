@@ -19,9 +19,17 @@ class CatalogController extends Controller
             ->respond();
     }
 
+    public function show(Catalog $catalog): JsonResponse
+    {
+        return $this->responder
+            ->success($catalog->load('items'), [CatalogTransformer::class, 'transform'])
+            ->message('Catalogo obtenido correctamente.')
+            ->respond();
+    }
+
     public function store(Request $request): JsonResponse
     {
-        if (! $request->user()->isSeniorAdmin()) {
+        if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede crear catalogos globales.', 403)->respond();
         }
 
@@ -40,7 +48,7 @@ class CatalogController extends Controller
 
     public function update(Request $request, Catalog $catalog): JsonResponse
     {
-        if (! $request->user()->isSeniorAdmin()) {
+        if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede editar catalogos globales.', 403)->respond();
         }
 

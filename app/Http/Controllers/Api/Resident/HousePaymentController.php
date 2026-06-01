@@ -18,7 +18,7 @@ class HousePaymentController extends Controller
             ->wherePivotNotNull('approved_at')
             ->first();
 
-        if (! $membership || ! $membership->pivot->can_view_payments) {
+        if (! $membership || ! $request->user()->hasHousePermission('resident.payments.view', $house->id)) {
             return $this->responder
                 ->error('No autorizado para ver los pagos de esta casa.', 403)
                 ->respond();

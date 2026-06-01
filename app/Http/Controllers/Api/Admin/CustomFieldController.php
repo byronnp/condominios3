@@ -17,7 +17,7 @@ class CustomFieldController extends Controller
 
     public function index(Request $request, Condominium $condominium): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
         return $this->responder
             ->success($condominium->customFields()->with(['optionsCatalog', 'condominium'])->orderBy('sort_order')->get(), [CustomFieldTransformer::class, 'transform'])
@@ -27,7 +27,7 @@ class CustomFieldController extends Controller
 
     public function store(Request $request, Condominium $condominium): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
         $data = $request->validate([
             'entity_type' => ['required', Rule::in(['user', 'house', 'payment', 'fee_charge'])],
@@ -48,7 +48,7 @@ class CustomFieldController extends Controller
 
     public function update(Request $request, CustomField $customField): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $customField->condominium_id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $customField->condominium_id, 'houses.manage');
 
         $data = $request->validate([
             'label' => ['sometimes', 'string', 'max:255'],

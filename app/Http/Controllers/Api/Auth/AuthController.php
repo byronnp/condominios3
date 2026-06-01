@@ -7,6 +7,7 @@ use App\Models\Auth\UserSession;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Services\JwtService;
+use App\Support\ResourceActions;
 use App\Transformers\UserTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ class AuthController extends Controller
         ]);
 
         return $this->responder
-            ->success($user->load('identificationType'), [UserTransformer::class, 'transform'], 201)
+            ->success($user->load(['identificationType', 'userRole']), [UserTransformer::class, 'transform'], 201)
             ->message('Usuario creado correctamente. Debe aceptar una invitacion o ser asignado por administracion para ver una casa.')
             ->respond();
     }
@@ -113,8 +114,9 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return $this->responder->success([
-            'user' => UserTransformer::transform($request->user()->load('identificationType')),
+            'user' => UserTransformer::transform($request->user()->load(['identificationType', 'userRole'])),
             'session' => $this->sessionPayload($request->attributes->get('auth_session')),
+            'actions' => ResourceActions::global($request->user()),
         ])->message('Usuario autenticado.')->respond();
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
 use App\Http\Controllers\Controller;
+use App\Models\Auth\Role;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\House;
 use App\Models\User;
@@ -38,16 +39,13 @@ class ResidentController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'house_id' => ['required', 'exists:houses,id'],
             'relationship_type_id' => ['required', 'exists:catalog_items,id'],
+            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'resident')->where('is_active', true)],
             'is_primary' => ['sometimes', 'boolean'],
-            'can_view_balance' => ['sometimes', 'boolean'],
-            'can_view_payments' => ['sometimes', 'boolean'],
-            'can_make_payments' => ['sometimes', 'boolean'],
             'can_receive_notifications' => ['sometimes', 'boolean'],
-            'can_invite_users' => ['sometimes', 'boolean'],
         ]);
 
         $house = House::query()->findOrFail($data['house_id']);
-        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_residents');
+        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'residents.manage');
         $relationshipType = $this->relationshipType($data['relationship_type_id'], ['owner', 'spouse', 'family', 'tenant', 'representative']);
         $isOwner = $relationshipType->code === 'owner';
 
@@ -82,12 +80,9 @@ class ResidentController extends Controller
         $house->users()->syncWithoutDetaching([
             $user->id => [
                 'relationship_type_id' => $relationshipType->id,
+                'role_id' => $data['role_id'] ?? Role::idForCode($isOwner ? Role::RESIDENT_OWNER : Role::RESIDENT_VIEWER),
                 'is_primary' => $data['is_primary'] ?? $isOwner,
-                'can_view_balance' => $data['can_view_balance'] ?? true,
-                'can_view_payments' => $data['can_view_payments'] ?? true,
-                'can_make_payments' => $data['can_make_payments'] ?? $isOwner,
                 'can_receive_notifications' => $data['can_receive_notifications'] ?? true,
-                'can_invite_users' => $data['can_invite_users'] ?? $isOwner,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $request->user()->id,
             ],
@@ -111,7 +106,7 @@ class ResidentController extends Controller
         );
 
         return $this->responder
-            ->success($user->load(['houses', 'identificationType']), [UserTransformer::class, 'transform'], 201)
+            ->success($user->load(['houses', 'identificationType', 'userRole']), [UserTransformer::class, 'transform'], 201)
             ->message('Residente asignado a la casa correctamente.')
             ->respond();
     }

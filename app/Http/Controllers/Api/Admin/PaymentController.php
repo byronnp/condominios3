@@ -47,7 +47,7 @@ class PaymentController extends Controller
         ]);
 
         $charge = FeeCharge::query()->with('house.condominium')->findOrFail($data['fee_charge_id']);
-        $this->abortUnlessCanManageCondominium($request->user(), $charge->house->condominium_id, 'can_manage_payments');
+        $this->abortUnlessCanManageCondominium($request->user(), $charge->house->condominium_id, 'payments.manage');
         $paymentMethod = $paymentMethodResolver->resolve($data['condominium_payment_method_id'] ?? null, $charge->house->condominium);
 
         $payment = DB::transaction(function () use ($data, $paymentMethod, $request): Payment {

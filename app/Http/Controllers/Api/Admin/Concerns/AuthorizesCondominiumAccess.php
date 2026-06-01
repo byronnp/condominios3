@@ -9,15 +9,11 @@ trait AuthorizesCondominiumAccess
 {
     protected function canManageCondominium(User $user, int $condominiumId, string $permission): bool
     {
-        if ($user->isSeniorAdmin()) {
+        if ($user->hasPermission('system.manage')) {
             return true;
         }
 
-        return $user->managedCondominiums()
-            ->where('condominiums.id', $condominiumId)
-            ->wherePivot($permission, true)
-            ->wherePivotNotNull('approved_at')
-            ->exists();
+        return $user->hasPermission($permission, $condominiumId);
     }
 
     protected function abortUnlessCanManageCondominium(User $user, int $condominiumId, string $permission): void
@@ -29,7 +25,7 @@ trait AuthorizesCondominiumAccess
 
     protected function scopeCondominiumsFor(User $user, Builder $query): Builder
     {
-        if ($user->isSeniorAdmin()) {
+        if ($user->hasPermission('system.manage')) {
             return $query;
         }
 

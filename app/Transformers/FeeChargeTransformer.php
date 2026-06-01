@@ -3,6 +3,7 @@
 namespace App\Transformers;
 
 use App\Models\Billing\FeeCharge;
+use App\Support\ResourceActions;
 
 class FeeChargeTransformer
 {
@@ -18,6 +19,7 @@ class FeeChargeTransformer
             'due_date' => $charge->due_date,
             'status' => $charge->status,
             'description' => $charge->description,
+            'actions' => ResourceActions::feeCharge($charge),
         ];
     }
 }

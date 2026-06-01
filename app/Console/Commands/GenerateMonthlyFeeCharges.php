@@ -24,7 +24,7 @@ class GenerateMonthlyFeeCharges extends Command
         }
 
         Condominium::query()
-            ->where('is_active', true)
+            ->whereHas('status', fn ($query) => $query->where('code', 'active'))
             ->orderBy('id')
             ->each(function (Condominium $condominium) use ($generator, $period): void {
                 try {

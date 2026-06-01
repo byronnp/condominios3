@@ -9,11 +9,12 @@ use App\Models\Catalog\CustomField;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'address', 'is_active'])]
+#[Fillable(['name', 'ruc', 'address', 'city', 'sector', 'status_id', 'total_houses', 'is_active'])]
 class Condominium extends Model
 {
     use SoftDeletes;
@@ -23,6 +24,8 @@ class Condominium extends Model
     protected function casts(): array
     {
         return [
+            'status_id' => 'integer',
+            'total_houses' => 'integer',
             'is_active' => 'boolean',
             'deleted_at' => 'datetime',
         ];
@@ -33,16 +36,16 @@ class Condominium extends Model
         return $this->hasMany(House::class);
     }
 
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(CatalogItem::class, 'status_id');
+    }
+
     public function administrators(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
             ->withPivot([
-                'role',
-                'can_manage_houses',
-                'can_manage_residents',
-                'can_manage_fees',
-                'can_manage_payments',
-                'can_manage_invitations',
+                'role_id',
                 'approved_at',
                 'approved_by',
                 'deleted_at',

@@ -16,7 +16,7 @@ class MenuController extends Controller
         $this->abortUnlessSeniorAdmin($request);
 
         $menus = Menu::query()
-            ->with('children')
+            ->with(['children.requiredPermission', 'requiredPermission'])
             ->whereNull('parent_id')
             ->orderBy('sort_order')
             ->orderBy('label')
@@ -41,8 +41,7 @@ class MenuController extends Controller
             'icon' => ['nullable', 'string', 'max:80'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
-            'required_role' => ['nullable', 'string', 'max:80'],
-            'required_permission' => ['nullable', 'string', 'max:80'],
+            'required_permission_id' => ['nullable', 'exists:permissions,id'],
         ]);
 
         $menu = Menu::query()->create([
@@ -52,7 +51,7 @@ class MenuController extends Controller
         ]);
 
         return $this->responder
-            ->success($menu->load('children'), [MenuTransformer::class, 'transform'], 201)
+            ->success($menu->load(['children.requiredPermission', 'requiredPermission']), [MenuTransformer::class, 'transform'], 201)
             ->message('Menu creado correctamente.')
             ->respond();
     }
@@ -70,8 +69,7 @@ class MenuController extends Controller
             'icon' => ['nullable', 'string', 'max:80'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
-            'required_role' => ['nullable', 'string', 'max:80'],
-            'required_permission' => ['nullable', 'string', 'max:80'],
+            'required_permission_id' => ['nullable', 'exists:permissions,id'],
         ]);
 
         if (($data['parent_id'] ?? null) === $menu->id) {
@@ -81,14 +79,14 @@ class MenuController extends Controller
         $menu->fill($data)->save();
 
         return $this->responder
-            ->success($menu->load('children'), [MenuTransformer::class, 'transform'])
+            ->success($menu->load(['children.requiredPermission', 'requiredPermission']), [MenuTransformer::class, 'transform'])
             ->message('Menu actualizado correctamente.')
             ->respond();
     }
 
     private function abortUnlessSeniorAdmin(Request $request): void
     {
-        if (! $request->user()?->isSeniorAdmin()) {
+        if (! $request->user()?->hasPermission('menus.manage')) {
             abort(403, 'Solo el administrador senior puede administrar menus.');
         }
     }

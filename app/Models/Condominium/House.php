@@ -5,6 +5,7 @@ namespace App\Models\Condominium;
 use App\Models\Billing\FeeCharge;
 use App\Models\Billing\Payment;
 use App\Models\Billing\PaymentBatch;
+use App\Models\Catalog\CatalogItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -35,16 +36,23 @@ class House extends Model
         return $this->belongsToMany(User::class)
             ->withPivot([
                 'relationship_type_id',
-                'can_view_balance',
-                'can_view_payments',
-                'can_make_payments',
+                'role_id',
                 'can_receive_notifications',
-                'can_invite_users',
                 'is_primary',
                 'approved_at',
                 'approved_by',
             ])
             ->withTimestamps();
+    }
+
+    public function ownerUsers(): BelongsToMany
+    {
+        return $this->usersByRelationship('owner');
+    }
+
+    public function administratorUsers(): BelongsToMany
+    {
+        return $this->usersByRelationship('representative');
     }
 
     public function feeCharges(): HasMany
@@ -91,5 +99,23 @@ class House extends Model
         }
 
         return str_pad($trimmed, 2, '0', STR_PAD_LEFT);
+    }
+
+    private function usersByRelationship(string $relationshipCode): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->whereIn('house_user.relationship_type_id', CatalogItem::query()
+                ->select('catalog_items.id')
+                ->where('catalog_items.code', $relationshipCode)
+                ->whereHas('catalog', fn ($query) => $query->where('code', 'house_relationship_types')))
+            ->withPivot([
+                'relationship_type_id',
+                'role_id',
+                'can_receive_notifications',
+                'is_primary',
+                'approved_at',
+                'approved_by',
+            ])
+            ->withTimestamps();
     }
 }

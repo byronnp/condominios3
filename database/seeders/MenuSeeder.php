@@ -2,37 +2,38 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auth\Permission;
 use App\Models\Menu\Menu;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class MenuSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->menu('admin.dashboard', 'Dashboard', '/admin/dashboard', 'layout-dashboard', 1, User::ROLE_CONDOMINIUM_ADMIN);
+        $this->menu('admin.dashboard', 'Dashboard', '/', 'layout-dashboard', 1, 'admin.access');
 
-        $administration = $this->menu('admin.administration', 'Administracion', null, 'building-2', 10, User::ROLE_CONDOMINIUM_ADMIN);
-        $this->menu('admin.condominiums', 'Condominios', '/admin/condominiums', 'building-2', 1, User::ROLE_SENIOR_ADMIN, null, $administration);
-        $this->menu('admin.houses', 'Casas', '/admin/houses', 'home', 2, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_houses', $administration);
-        $this->menu('admin.residents', 'Residentes', '/admin/residents', 'users', 3, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_residents', $administration);
+        $administration = $this->menu('admin.administration', 'Administracion', null, 'building-2', 10, 'admin.access');
+        $this->menu('admin.condominiums', 'Condominios', '/admin/condominios', 'building-2', 1, 'condominiums.manage', $administration);
+        $this->menu('admin.houses', 'Casas', '/admin/houses', 'home', 2, 'houses.manage', $administration);
+        $this->menu('admin.residents', 'Residentes', '/admin/residents', 'users', 3, 'residents.manage', $administration);
 
-        $billing = $this->menu('admin.billing', 'Facturacion', null, 'receipt', 20, User::ROLE_CONDOMINIUM_ADMIN);
-        $this->menu('admin.fee-rates', 'Tarifas de alicuotas', '/admin/fee-rates', 'badge-dollar-sign', 1, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_fees', $billing);
-        $this->menu('admin.fee-charges', 'Alicuotas', '/admin/fee-charges', 'receipt-text', 2, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_fees', $billing);
-        $this->menu('admin.payments', 'Pagos', '/admin/payments', 'credit-card', 3, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_payments', $billing);
-        $this->menu('admin.payment-methods', 'Metodos de pago', '/admin/payment-methods', 'wallet-cards', 4, User::ROLE_CONDOMINIUM_ADMIN, 'can_manage_payments', $billing);
+        $billing = $this->menu('admin.billing', 'Facturacion', null, 'receipt', 20, 'admin.access');
+        $this->menu('admin.fee-rates', 'Tarifas de alicuotas', '/admin/fee-rates', 'badge-dollar-sign', 1, 'fees.manage', $billing);
+        $this->menu('admin.fee-charges', 'Alicuotas', '/admin/fee-charges', 'receipt-text', 2, 'fees.manage', $billing);
+        $this->menu('admin.payments', 'Pagos', '/admin/payments', 'credit-card', 3, 'payments.manage', $billing);
+        $this->menu('admin.payment-methods', 'Metodos de pago', '/admin/payment-methods', 'wallet-cards', 4, 'payment_methods.manage', $billing);
 
-        $settings = $this->menu('admin.settings', 'Configuracion', null, 'settings', 30, User::ROLE_CONDOMINIUM_ADMIN);
-        $this->menu('admin.catalogs', 'Catalogos', '/admin/catalogs', 'list-tree', 1, User::ROLE_SENIOR_ADMIN, null, $settings);
-        $this->menu('admin.menus', 'Menus', '/admin/menus', 'panel-left', 2, User::ROLE_SENIOR_ADMIN, null, $settings);
-        $this->menu('admin.audit-logs', 'Auditoria', '/admin/audit-logs', 'shield-check', 3, User::ROLE_CONDOMINIUM_ADMIN, null, $settings);
+        $settings = $this->menu('admin.settings', 'Configuracion', null, 'settings', 30, 'admin.access');
+        $this->menu('admin.catalogs', 'Catalogos', '/admin/catalogs', 'list-tree', 1, 'catalogs.manage', $settings);
+        $this->menu('admin.menus', 'Menus', '/admin/menus', 'panel-left', 2, 'menus.manage', $settings);
+        $this->menu('admin.roles', 'Roles', '/admin/roles', 'shield-user', 3, 'roles.manage', $settings);
+        $this->menu('admin.audit-logs', 'Auditoria', '/admin/audit-logs', 'shield-check', 4, 'audit_logs.view', $settings);
 
-        $resident = $this->menu('resident.home', 'Mi hogar', '/resident/houses', 'home', 100, User::ROLE_RESIDENT);
-        $this->menu('resident.statement', 'Estado de cuenta', '/resident/statement', 'file-text', 1, User::ROLE_RESIDENT, 'can_view_balance', $resident);
-        $this->menu('resident.payments', 'Mis pagos', '/resident/payments', 'credit-card', 2, User::ROLE_RESIDENT, 'can_view_payments', $resident);
-        $this->menu('resident.advance-payments', 'Adelantar alicuotas', '/resident/advance-payments', 'calendar-plus', 3, User::ROLE_RESIDENT, 'can_make_payments', $resident);
-        $this->menu('resident.invitations', 'Invitaciones', '/resident/invitations', 'user-plus', 4, User::ROLE_RESIDENT, 'can_invite_users', $resident);
+        $resident = $this->menu('resident.home', 'Mi hogar', '/resident/houses', 'home', 100, 'resident.access');
+        $this->menu('resident.statement', 'Estado de cuenta', '/resident/statement', 'file-text', 1, 'resident.balance.view', $resident);
+        $this->menu('resident.payments', 'Mis pagos', '/resident/payments', 'credit-card', 2, 'resident.payments.view', $resident);
+        $this->menu('resident.advance-payments', 'Adelantar alicuotas', '/resident/advance-payments', 'calendar-plus', 3, 'resident.payments.create', $resident);
+        $this->menu('resident.invitations', 'Invitaciones', '/resident/invitations', 'user-plus', 4, 'resident.invitations.create', $resident);
     }
 
     private function menu(
@@ -41,7 +42,6 @@ class MenuSeeder extends Seeder
         ?string $path,
         ?string $icon,
         int $sortOrder,
-        ?string $requiredRole = null,
         ?string $requiredPermission = null,
         ?Menu $parent = null,
     ): Menu {
@@ -54,8 +54,9 @@ class MenuSeeder extends Seeder
             'icon' => $icon,
             'sort_order' => $sortOrder,
             'is_active' => true,
-            'required_role' => $requiredRole,
-            'required_permission' => $requiredPermission,
+            'required_permission_id' => $requiredPermission
+                ? Permission::query()->where('code', $requiredPermission)->value('id')
+                : null,
         ]);
     }
 }

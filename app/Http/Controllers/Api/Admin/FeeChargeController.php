@@ -51,7 +51,7 @@ class FeeChargeController extends Controller
         ]);
 
         $house = House::query()->findOrFail($data['house_id']);
-        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_fees');
+        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'fees.manage');
 
         $charge = FeeCharge::query()->create([
             ...$data,
@@ -90,7 +90,7 @@ class FeeChargeController extends Controller
         ]);
 
         $condominium = Condominium::query()->findOrFail($data['condominium_id']);
-        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'can_manage_fees');
+        $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'fees.manage');
 
         $result = $generator->generateForCondominium(
             $condominium,

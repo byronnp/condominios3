@@ -14,7 +14,7 @@ class CatalogItemController extends Controller
 {
     public function store(Request $request, Catalog $catalog): JsonResponse
     {
-        if (! $request->user()->isSeniorAdmin()) {
+        if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede crear items globales.', 403)->respond();
         }
 
@@ -34,7 +34,7 @@ class CatalogItemController extends Controller
 
     public function update(Request $request, CatalogItem $catalogItem): JsonResponse
     {
-        if (! $request->user()->isSeniorAdmin()) {
+        if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede editar items globales.', 403)->respond();
         }
 

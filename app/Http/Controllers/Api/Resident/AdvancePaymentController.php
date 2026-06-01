@@ -147,11 +147,10 @@ class AdvancePaymentController extends Controller
         $membership = $request->user()
             ->houses()
             ->where('houses.id', $house->id)
-            ->wherePivot('can_make_payments', true)
             ->wherePivotNotNull('approved_at')
             ->first();
 
-        if (! $membership) {
+        if (! $membership || ! $request->user()->hasHousePermission('resident.payments.create', $house->id)) {
             abort(403, 'No autorizado para pagar alicuotas de esta casa.');
         }
     }

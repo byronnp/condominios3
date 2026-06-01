@@ -18,8 +18,9 @@ class MenuTransformer
             'icon' => $menu->icon,
             'sort_order' => $menu->sort_order,
             'is_active' => $menu->is_active,
-            'required_role' => $menu->required_role,
-            'required_permission' => $menu->required_permission,
+            'required_permission' => $menu->requiredPermission
+                ? PermissionTransformer::transform($menu->requiredPermission)
+                : null,
             'children' => $menu->relationLoaded('children')
                 ? $menu->children->map(fn (Menu $child) => self::transform($child))->values()
                 : [],

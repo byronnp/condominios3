@@ -13,12 +13,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'house_id',
     'email',
     'relationship_type_id',
+    'role_id',
     'token',
-    'can_view_balance',
-    'can_view_payments',
-    'can_make_payments',
     'can_receive_notifications',
-    'can_invite_users',
     'invited_by',
     'accepted_by',
     'accepted_at',
@@ -32,11 +29,7 @@ class HouseInvitation extends Model
     protected function casts(): array
     {
         return [
-            'can_view_balance' => 'boolean',
-            'can_view_payments' => 'boolean',
-            'can_make_payments' => 'boolean',
             'can_receive_notifications' => 'boolean',
-            'can_invite_users' => 'boolean',
             'accepted_at' => 'datetime',
             'expires_at' => 'datetime',
             'revoked_at' => 'datetime',

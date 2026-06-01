@@ -2,6 +2,7 @@
 
 namespace App\Transformers;
 
+use App\Models\Auth\Role;
 use App\Models\User;
 
 class UserTransformer
@@ -21,7 +22,10 @@ class UserTransformer
             'mobile_phone' => $user->mobile_phone,
             'landline_phone' => $user->landline_phone,
             'email' => $user->email,
-            'role' => $user->role,
+            'role' => $user->userRole ? [
+                'id' => $user->userRole->id,
+                'name' => $user->userRole->name,
+            ] : null,
             'is_active' => $user->is_active,
             'last_login_at' => $user->last_login_at,
             'last_active_at' => $user->last_active_at,
@@ -29,15 +33,22 @@ class UserTransformer
                 ? $user->managedCondominiums->map(fn ($condominium) => [
                     'id' => $condominium->id,
                     'name' => $condominium->name,
-                    'permissions' => [
-                        'can_manage_houses' => (bool) $condominium->pivot->can_manage_houses,
-                        'can_manage_residents' => (bool) $condominium->pivot->can_manage_residents,
-                        'can_manage_fees' => (bool) $condominium->pivot->can_manage_fees,
-                        'can_manage_payments' => (bool) $condominium->pivot->can_manage_payments,
-                        'can_manage_invitations' => (bool) $condominium->pivot->can_manage_invitations,
-                    ],
+                    'role' => self::pivotRole($condominium->pivot->role_id),
                 ])->values()
                 : null,
         ];
+    }
+
+    private static function pivotRole(?int $roleId): ?array
+    {
+        if (! $roleId) {
+            return null;
+        }
+
+        $role = Role::query()
+            ->with('permissions')
+            ->find($roleId);
+
+        return $role ? RoleTransformer::transform($role) : null;
     }
 }

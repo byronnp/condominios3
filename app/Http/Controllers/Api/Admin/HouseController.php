@@ -20,7 +20,11 @@ class HouseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $houses = House::query()
-            ->with('condominium')
+            ->with([
+                'condominium',
+                'ownerUsers' => fn ($query) => $query->orderByPivot('is_primary', 'desc'),
+                'administratorUsers' => fn ($query) => $query->orderByPivot('is_primary', 'desc'),
+            ])
             ->when(! $request->user()->isSeniorAdmin(), fn ($query) => $query->whereIn('condominium_id', $this->managedCondominiumIds($request->user())))
             ->when($request->integer('condominium_id'), fn ($query, $id) => $query->where('condominium_id', $id))
             ->latest()
@@ -48,7 +52,7 @@ class HouseController extends Controller
             'house_number.unique' => 'Ya existe una casa con este numero en el condominio.',
         ]);
 
-        $this->abortUnlessCanManageCondominium($request->user(), (int) $data['condominium_id'], 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), (int) $data['condominium_id'], 'houses.manage');
 
         $condominium = Condominium::query()->findOrFail($data['condominium_id']);
         $code = House::generateCode($condominium, $data['house_number']);
@@ -86,17 +90,17 @@ class HouseController extends Controller
 
     public function show(Request $request, House $house): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'houses.manage');
 
         return $this->responder
-            ->success($house->load(['condominium', 'users']), [HouseTransformer::class, 'transform'])
+            ->success($house->load(['condominium', 'users', 'ownerUsers', 'administratorUsers']), [HouseTransformer::class, 'transform'])
             ->message('Casa obtenida correctamente.')
             ->respond();
     }
 
     public function update(Request $request, House $house, AuditLogger $audit): JsonResponse
     {
-        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'can_manage_houses');
+        $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'houses.manage');
 
         $data = $request->validate([
             'house_number' => [
@@ -152,4 +156,5 @@ class HouseController extends Controller
             ->message('Casa actualizada correctamente.')
             ->respond();
     }
+
 }

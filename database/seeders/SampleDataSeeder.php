@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auth\Role;
 use App\Models\Billing\CondominiumFeeRate;
 use App\Models\Billing\CondominiumPaymentMethod;
 use App\Models\Billing\FeeCharge;
@@ -50,11 +51,22 @@ class SampleDataSeeder extends Seeder
         $transferPaymentMethod = $paymentMethods->items()->where('code', 'transfer')->firstOrFail();
 
         $seniorAdmin = User::query()->where('email', 'admin@condominios.test')->firstOrFail();
+        $activeCondominiumStatusId = Catalog::query()
+            ->where('code', 'condominium_statuses')
+            ->firstOrFail()
+            ->items()
+            ->where('code', 'active')
+            ->value('id');
 
         $ceibos = Condominium::query()->updateOrCreate([
             'name' => 'Condominio Los Ceibos',
         ], [
+            'ruc' => '0999999999001',
             'address' => 'Av. Principal y Calle 1',
+            'city' => 'Guayaquil',
+            'sector' => 'Norte',
+            'status_id' => $activeCondominiumStatusId,
+            'total_houses' => 2,
             'is_active' => true,
         ]);
 
@@ -134,22 +146,16 @@ class SampleDataSeeder extends Seeder
         $houseA01->users()->syncWithoutDetaching([
             $owner->id => [
                 'relationship_type_id' => $ownerType->id,
-                'can_view_balance' => true,
-                'can_view_payments' => true,
-                'can_make_payments' => true,
+                'role_id' => Role::idForCode(Role::RESIDENT_OWNER),
                 'can_receive_notifications' => true,
-                'can_invite_users' => true,
                 'is_primary' => true,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $seniorAdmin->id,
             ],
             $family->id => [
                 'relationship_type_id' => $familyType->id,
-                'can_view_balance' => true,
-                'can_view_payments' => true,
-                'can_make_payments' => false,
+                'role_id' => Role::idForCode(Role::RESIDENT_VIEWER),
                 'can_receive_notifications' => true,
-                'can_invite_users' => false,
                 'is_primary' => false,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $owner->id,
@@ -178,12 +184,9 @@ class SampleDataSeeder extends Seeder
             'email' => 'invitado@test.com',
         ], [
             'relationship_type_id' => $familyType->id,
+            'role_id' => Role::idForCode(Role::RESIDENT_VIEWER),
             'token' => (string) Str::uuid(),
-            'can_view_balance' => true,
-            'can_view_payments' => true,
-            'can_make_payments' => false,
             'can_receive_notifications' => true,
-            'can_invite_users' => false,
             'invited_by' => $owner->id,
             'expires_at' => Carbon::now()->addDays(7),
         ]);
@@ -191,7 +194,12 @@ class SampleDataSeeder extends Seeder
         $prados = Condominium::query()->updateOrCreate([
             'name' => 'Condominio Los Prados',
         ], [
+            'ruc' => '0999999998001',
             'address' => 'Calle Los Jardines y Av. Norte',
+            'city' => 'Guayaquil',
+            'sector' => 'Via a la costa',
+            'status_id' => $activeCondominiumStatusId,
+            'total_houses' => 1,
             'is_active' => true,
         ]);
 
@@ -253,11 +261,8 @@ class SampleDataSeeder extends Seeder
         $houseB01->users()->syncWithoutDetaching([
             $pradosOwner->id => [
                 'relationship_type_id' => $ownerType->id,
-                'can_view_balance' => true,
-                'can_view_payments' => true,
-                'can_make_payments' => true,
+                'role_id' => Role::idForCode(Role::RESIDENT_OWNER),
                 'can_receive_notifications' => true,
-                'can_invite_users' => true,
                 'is_primary' => true,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $seniorAdmin->id,
@@ -336,12 +341,7 @@ class SampleDataSeeder extends Seeder
     {
         $condominium->administrators()->syncWithoutDetaching([
             $condominiumAdmin->id => [
-                'role' => User::ROLE_CONDOMINIUM_ADMIN,
-                'can_manage_houses' => true,
-                'can_manage_residents' => true,
-                'can_manage_fees' => true,
-                'can_manage_payments' => true,
-                'can_manage_invitations' => true,
+                'role_id' => Role::idForCode(User::ROLE_CONDOMINIUM_ADMIN),
                 'approved_at' => Carbon::now(),
                 'approved_by' => $seniorAdmin->id,
                 'deleted_at' => null,
