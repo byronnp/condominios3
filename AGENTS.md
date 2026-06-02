@@ -7,18 +7,41 @@ This is a Laravel 13 backend for condominium administration. Core PHP code lives
 - `app/Http/Controllers/Api/Auth`: JWT authentication endpoints.
 - `app/Http/Controllers/Api/Admin`: administrative APIs for condominiums, houses, residents, fees, and payments.
 - `app/Http/Controllers/Api/Resident`: resident-facing APIs for owned/authorized houses and invitations.
+- `app/Http/Requests/Api/Admin`: Form Request validation for admin API write endpoints. Add new request classes here instead of growing inline controller validation.
 - `app/Models/Auth`, `app/Models/Condominium`, `app/Models/Billing`, `app/Models/Catalog`: domain models.
 - `app/Models/Audit`: audit log model for per-condominium activity history.
 - `app/Models/Auth/Role.php` and `app/Models/Auth/Permission.php`: RBAC roles and backend permission contracts.
 - `app/Models/Menu`: database-driven navigation menu model.
 - `app/Support`: API response helpers such as `ApiResponder`.
 - `app/Transformers`: response transformers for stable API payloads.
-- `app/Services`: shared services such as JWT handling.
+- `app/Services`: application services and use-case orchestration. Current domains include `Audit`, `Billing`, `Condominium`, `Menu`, and `Resident`.
 - `routes/api.php` loads module route files from `routes/api/`.
+- `routes/api/admin.php` is a loader for admin route modules in `routes/api/admin/`.
+- `routes/api/admin/`: admin route modules grouped by domain, such as `condominiums.php`, `houses.php`, `billing.php`, `residents.php`, `catalogs.php`, `security.php`, `menus.php`, and `audit.php`.
 - `config/scramble.php` configures generated API documentation.
 - `database/migrations`, `database/seeders`, and `database/factories` contain database setup.
 - `tests/Feature` and `tests/Unit` contain PHPUnit tests.
 - `resources/` and `public/` hold frontend assets and public files; `public/docs/openapi.json` is the exported OpenAPI document.
+
+## Controller, Request & Service Boundaries
+
+Keep API controllers thin. Controllers should authenticate/authorize, call a Form Request for validation, delegate business work to a service, and return a responder/transformer payload.
+
+- Put admin write validation in `app/Http/Requests/Api/Admin/{Module}`.
+- Put reusable business workflows in `app/Services/{Domain}`.
+- Keep transactions, balance recalculation, generated records, and audit side effects inside services when they belong to the same use case.
+- Keep response shaping in transformers, not services.
+- Keep route definitions in the matching route module under `routes/api/admin/` or `routes/api/resident.php`.
+
+Existing service examples:
+
+- `App\Services\Condominium\CondominiumAdminService`: assign, update, and remove condominium administrators.
+- `App\Services\Condominium\CreateHouseService` and `UpdateHouseService`: create/update houses, generate house codes, and audit changes.
+- `App\Services\Billing\RegisterPaymentService`: register payments transactionally and recalculate charge balances.
+- `App\Services\Billing\CreateFeeChargeService` and `GenerateFeeChargesForMonthService`: create manual charges and generate monthly charges with audit logs.
+- `App\Services\Billing\AdvancePaymentService`: preview and create resident advance payments.
+- `App\Services\Resident\AssignResidentToHouseService`: create/update resident users and attach them to houses.
+- `App\Services\Resident\HouseInvitationService`: create and accept house invitations.
 
 ## Build, Test, and Development Commands
 
@@ -45,6 +68,18 @@ Follow Laravel conventions and PSR-12 style. Use 4-space indentation for PHP. Ru
 ```
 
 Use singular model names (`House`, `Payment`) and plural table names (`houses`, `payments`). Keep API controllers grouped by role/module under `app/Http/Controllers/Api`. Use explicit namespaces when adding models to domain folders.
+
+When adding a new admin module:
+
+1. Add the permission contract in `App\Models\Auth\Permission::defaults()`.
+2. Add or update the route module under `routes/api/admin/`.
+3. Create the controller under `app/Http/Controllers/Api/Admin`.
+4. Create Form Requests under `app/Http/Requests/Api/Admin/{Module}` for write endpoints.
+5. Add a service under `app/Services/{Domain}` when the operation has business rules, transactions, generated records, balance changes, invitations, assignments, or audit side effects.
+6. Add/update a transformer under `app/Transformers` for stable response payloads.
+7. Add a menu entry only after the API validates the same permission.
+
+When adding a resident module, keep routes in `routes/api/resident.php`, controllers under `app/Http/Controllers/Api/Resident`, and enforce house-scoped permissions through `hasHousePermission()`.
 
 API controllers should return responses through `$this->responder`, not `response()->json()`. Use transformers from `app/Transformers`, for example:
 

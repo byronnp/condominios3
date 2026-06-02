@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Admin\Condominium\StoreCondominiumRequest;
+use App\Http\Requests\Api\Admin\Condominium\UpdateCondominiumRequest;
 use App\Models\Catalog\Catalog;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\Condominium;
@@ -12,7 +14,6 @@ use App\Transformers\CondominiumTransformer;
 use App\Transformers\HouseTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CondominiumController extends Controller
 {
@@ -46,23 +47,13 @@ class CondominiumController extends Controller
             ->respond();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreCondominiumRequest $request): JsonResponse
     {
         if (! $request->user()->hasPermission('condominiums.manage')) {
             return $this->responder->error('Solo el administrador senior puede crear condominios.', 403)->respond();
         }
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'ruc' => ['nullable', 'string', 'max:20', 'unique:condominiums,ruc'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:255'],
-            'sector' => ['nullable', 'string', 'max:255'],
-            'status_id' => ['sometimes', Rule::exists('catalog_items', 'id')->where(fn ($query) => $query
-                ->where('catalog_id', $this->condominiumStatusCatalogId())
-                ->where('is_active', true))],
-            'total_houses' => ['sometimes', 'integer', 'min:0'],
-        ]);
+        $data = $request->validated();
 
         $data['status_id'] ??= $this->condominiumStatusId('active');
         $data['is_active'] = $this->statusCodeFor((int) $data['status_id']) === 'active';
@@ -86,23 +77,13 @@ class CondominiumController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, Condominium $condominium): JsonResponse
+    public function update(UpdateCondominiumRequest $request, Condominium $condominium): JsonResponse
     {
         if (! $request->user()->hasPermission('condominiums.manage')) {
             return $this->responder->error('Solo el administrador senior puede editar condominios.', 403)->respond();
         }
 
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'ruc' => ['nullable', 'string', 'max:20', Rule::unique('condominiums', 'ruc')->ignore($condominium->id)],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:255'],
-            'sector' => ['nullable', 'string', 'max:255'],
-            'status_id' => ['sometimes', Rule::exists('catalog_items', 'id')->where(fn ($query) => $query
-                ->where('catalog_id', $this->condominiumStatusCatalogId())
-                ->where('is_active', true))],
-            'total_houses' => ['sometimes', 'integer', 'min:0'],
-        ]);
+        $data = $request->validated();
 
         if (array_key_exists('status_id', $data)) {
             $data['is_active'] = $this->statusCodeFor((int) $data['status_id']) === 'active';
