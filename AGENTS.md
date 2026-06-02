@@ -7,13 +7,19 @@ This is a Laravel 13 backend for condominium administration. Core PHP code lives
 - `app/Http/Controllers/Api/Auth`: JWT authentication endpoints.
 - `app/Http/Controllers/Api/Admin`: administrative APIs for condominiums, houses, residents, fees, and payments.
 - `app/Http/Controllers/Api/Resident`: resident-facing APIs for owned/authorized houses and invitations.
+- `app/Http/Requests`: Form Request validation grouped by API area. Use these for non-trivial request validation instead of inline controller validation.
 - `app/Models/Auth`, `app/Models/Condominium`, `app/Models/Billing`, `app/Models/Catalog`: domain models.
 - `app/Models/Audit`: audit log model for per-condominium activity history.
 - `app/Models/Auth/Role.php` and `app/Models/Auth/Permission.php`: RBAC roles and backend permission contracts.
 - `app/Models/Menu`: database-driven navigation menu model.
 - `app/Support`: API response helpers such as `ApiResponder`.
 - `app/Transformers`: response transformers for stable API payloads.
-- `app/Services`: shared services such as JWT handling.
+- `app/Services`: shared services and business workflows. Keep complex domain logic here instead of in controllers.
+  - `app/Services/Audit`: audit log writing.
+  - `app/Services/Billing`: monthly fee generation, payment method resolution, payment registration, balance recalculation, and advance-payment planning.
+  - `app/Services/Condominium`: condominium administration workflows such as administrator assignment, updates, and removal.
+  - `app/Services/Menu`: permission-aware navigation menu building.
+  - `app/Services/Resident`: resident workflows such as house invitation creation and acceptance.
 - `routes/api.php` loads module route files from `routes/api/`.
 - `config/scramble.php` configures generated API documentation.
 - `database/migrations`, `database/seeders`, and `database/factories` contain database setup.
@@ -54,6 +60,15 @@ return $this->responder
     ->message('Casas obtenidas correctamente.')
     ->respond();
 ```
+
+Controllers should stay thin: validate input, authorize the user, call application services, audit significant actions, and return transformed responses. Do not put payment transactions, fee balance recalculation, advance-payment period planning, invitation acceptance, or condominium-admin assignment logic directly in controllers. Use the existing services:
+
+- `App\Services\Billing\PaymentRegistrationService` for creating payments, advance-payment batches, and refreshing fee-charge balances.
+- `App\Services\Billing\AdvancePaymentPlanner` for advance-payment previews and payable-period calculation.
+- `App\Services\Resident\HouseInvitationService` for creating and accepting house invitations.
+- `App\Services\Condominium\CondominiumAdminService` for assigning, updating, and removing condominium administrators.
+
+Use `FormRequest` classes under `app/Http/Requests` for endpoint validation when a controller action accepts structured input. Put permission checks in `authorize()` only when the action must reject unauthorized users before validation, preserving the API's expected `403` behavior. Keep route-model authorization and cross-record business validation in services or controller authorization helpers when it depends on loaded domain state.
 
 ## Testing Guidelines
 

@@ -8,7 +8,6 @@ use App\Models\Billing\CondominiumFeeRate;
 use App\Models\Condominium\Condominium;
 use App\Services\Audit\AuditLogger;
 use App\Transformers\CondominiumFeeRateTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,7 @@ class CondominiumFeeRateController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $rates = CondominiumFeeRate::query()
             ->with('condominium')
@@ -34,7 +33,7 @@ class CondominiumFeeRateController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, AuditLogger $audit): JsonResponse
+    public function store(Request $request, AuditLogger $audit)
     {
         $data = $request->validate([
             'condominium_id' => ['required', 'exists:condominiums,id'],

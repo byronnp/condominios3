@@ -5,12 +5,11 @@ namespace App\Http\Controllers\Api\Resident;
 use App\Http\Controllers\Controller;
 use App\Models\Condominium\House;
 use App\Transformers\HouseTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MyHouseController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         return $this->responder
             ->success($request->user()
@@ -22,7 +21,7 @@ class MyHouseController extends Controller
             ->respond();
     }
 
-    public function statement(Request $request, House $house): JsonResponse
+    public function statement(Request $request, House $house)
     {
         $membership = $this->membership($request, $house);
 

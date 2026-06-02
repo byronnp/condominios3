@@ -10,7 +10,6 @@ use App\Models\Condominium\House;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
 use App\Transformers\UserTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -19,7 +18,7 @@ class ResidentController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function store(Request $request, AuditLogger $audit): JsonResponse
+    public function store(Request $request, AuditLogger $audit)
     {
         $existingUser = User::query()->where('email', $request->input('email'))->first();
 

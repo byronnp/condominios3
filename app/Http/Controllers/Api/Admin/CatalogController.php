@@ -5,13 +5,12 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Catalog\Catalog;
 use App\Transformers\CatalogTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CatalogController extends Controller
 {
-    public function index(): JsonResponse
+    public function index()
     {
         return $this->responder
             ->success(Catalog::query()->with('items')->orderBy('name')->get(), [CatalogTransformer::class, 'transform'])
@@ -19,7 +18,7 @@ class CatalogController extends Controller
             ->respond();
     }
 
-    public function show(Catalog $catalog): JsonResponse
+    public function show(Catalog $catalog)
     {
         return $this->responder
             ->success($catalog->load('items'), [CatalogTransformer::class, 'transform'])
@@ -27,7 +26,7 @@ class CatalogController extends Controller
             ->respond();
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede crear catalogos globales.', 403)->respond();
@@ -46,7 +45,7 @@ class CatalogController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, Catalog $catalog): JsonResponse
+    public function update(Request $request, Catalog $catalog)
     {
         if (! $request->user()->hasPermission('catalogs.manage')) {
             return $this->responder->error('Solo el administrador senior puede editar catalogos globales.', 403)->respond();

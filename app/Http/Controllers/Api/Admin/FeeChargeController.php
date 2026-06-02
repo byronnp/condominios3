@@ -10,7 +10,6 @@ use App\Models\Condominium\House;
 use App\Services\Audit\AuditLogger;
 use App\Services\Billing\MonthlyFeeChargeGenerator;
 use App\Transformers\FeeChargeTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +17,7 @@ class FeeChargeController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $charges = FeeCharge::query()
             ->with('house.condominium')
@@ -36,7 +35,7 @@ class FeeChargeController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, AuditLogger $audit): JsonResponse
+    public function store(Request $request, AuditLogger $audit)
     {
         $data = $request->validate([
             'house_id' => ['required', 'exists:houses,id'],
@@ -81,7 +80,7 @@ class FeeChargeController extends Controller
             ->respond();
     }
 
-    public function generateMonth(Request $request, MonthlyFeeChargeGenerator $generator, AuditLogger $audit): JsonResponse
+    public function generateMonth(Request $request, MonthlyFeeChargeGenerator $generator, AuditLogger $audit)
     {
         $data = $request->validate([
             'condominium_id' => ['required', 'exists:condominiums,id'],

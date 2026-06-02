@@ -8,7 +8,6 @@ use App\Models\Condominium\Condominium;
 use App\Models\Condominium\House;
 use App\Services\Audit\AuditLogger;
 use App\Transformers\HouseTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +16,7 @@ class HouseController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $houses = House::query()
             ->with([
@@ -36,7 +35,7 @@ class HouseController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, AuditLogger $audit): JsonResponse
+    public function store(Request $request, AuditLogger $audit)
     {
         $data = $request->validate([
             'condominium_id' => ['required', 'exists:condominiums,id'],
@@ -88,7 +87,7 @@ class HouseController extends Controller
             ->respond();
     }
 
-    public function show(Request $request, House $house): JsonResponse
+    public function show(Request $request, House $house)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'houses.manage');
 
@@ -98,7 +97,7 @@ class HouseController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, House $house, AuditLogger $audit): JsonResponse
+    public function update(Request $request, House $house, AuditLogger $audit)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'houses.manage');
 

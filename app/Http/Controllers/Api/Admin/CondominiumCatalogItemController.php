@@ -7,14 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\Condominium;
 use App\Transformers\CatalogItemTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CondominiumCatalogItemController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request, Condominium $condominium): JsonResponse
+    public function index(Request $request, Condominium $condominium)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
@@ -29,7 +28,7 @@ class CondominiumCatalogItemController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, Condominium $condominium): JsonResponse
+    public function store(Request $request, Condominium $condominium)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
