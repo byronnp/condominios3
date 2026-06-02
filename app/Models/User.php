@@ -120,7 +120,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasPermission('admin.access');
+        return $this->hasPermission('admin.access') || $this->hasAnyCondominiumPermission('condominium.access');
     }
 
     public function hasPermission(string $permission, ?int $condominiumId = null): bool
@@ -207,6 +207,23 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    public function hasAnyCondominiumPermission(string $permission): bool
+    {
+        if (! $this->role_id) {
+            return false;
+        }
+
+        if ($permission !== 'system.manage' && $this->roleHasPermission((int) $this->role_id, 'system.manage')) {
+            return true;
+        }
+
+        return $this->managedCondominiums()
+            ->wherePivotNotNull('approved_at')
+            ->pluck('condominium_user.role_id')
+            ->filter()
+            ->contains(fn ($roleId) => $this->roleHasPermission((int) $roleId, $permission));
     }
 
     private function roleHasPermission(int $roleId, string $permission): bool

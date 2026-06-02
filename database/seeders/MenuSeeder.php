@@ -16,6 +16,7 @@ class MenuSeeder extends Seeder
         $this->menu('admin.condominiums', 'Condominios', '/admin/condominios', 'building-2', 1, 'condominiums.manage', $administration);
         $this->menu('admin.houses', 'Casas', '/admin/houses', 'home', 2, 'houses.manage', $administration);
         $this->menu('admin.residents', 'Residentes', '/admin/residents', 'users', 3, 'residents.manage', $administration);
+        $this->menu('admin.board', 'Directivas', '/admin/board', 'users-round', 4, 'board.view', $administration);
 
         $billing = $this->menu('admin.billing', 'Facturacion', null, 'receipt', 20, 'admin.access');
         $this->menu('admin.fee-rates', 'Tarifas de alicuotas', '/admin/fee-rates', 'badge-dollar-sign', 1, 'fees.manage', $billing);

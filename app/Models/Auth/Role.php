@@ -28,6 +28,16 @@ class Role extends Model
 
     public const RESIDENT_VIEWER = 'resident_viewer';
 
+    public const BOARD_PRESIDENT = 'board_president';
+
+    public const BOARD_TREASURER = 'board_treasurer';
+
+    public const BOARD_SECRETARY = 'board_secretary';
+
+    public const BOARD_MEMBER = 'board_member';
+
+    public const ACCOUNTANT = 'accountant';
+
     /**
      * @return array<int, array{code: string, name: string, is_active: bool}>
      */

@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->seedResidentOperationalRoles();
+        $this->seedBoardOperationalRoles();
         $this->syncDefaultRolePermissions();
         $this->syncLegacyHouseRoles();
 
@@ -121,6 +122,30 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $boardPositions = Catalog::query()->updateOrCreate([
+            'code' => 'board_positions',
+        ], [
+            'name' => 'Cargos de directiva',
+            'description' => 'Catalogo global para cargos de directiva de condominios.',
+            'is_active' => true,
+        ]);
+
+        foreach ([
+            ['code' => 'president', 'name' => 'Presidente', 'sort_order' => 1],
+            ['code' => 'vice_president', 'name' => 'Vicepresidente', 'sort_order' => 2],
+            ['code' => 'treasurer', 'name' => 'Tesorero', 'sort_order' => 3],
+            ['code' => 'secretary', 'name' => 'Secretario', 'sort_order' => 4],
+            ['code' => 'vocal', 'name' => 'Vocal', 'sort_order' => 5],
+        ] as $item) {
+            $boardPositions->items()->updateOrCreate([
+                'code' => $item['code'],
+            ], [
+                'name' => $item['name'],
+                'sort_order' => $item['sort_order'],
+                'is_active' => true,
+            ]);
+        }
+
         User::query()->updateOrCreate([
             'email' => env('ADMIN_EMAIL', 'admin@condominios.test'),
         ], [
@@ -154,18 +179,29 @@ class DatabaseSeeder extends Seeder
         $residentOwner = Role::query()->where('code', Role::RESIDENT_OWNER)->first();
         $residentPayer = Role::query()->where('code', Role::RESIDENT_PAYER)->first();
         $residentViewer = Role::query()->where('code', Role::RESIDENT_VIEWER)->first();
+        $boardPresident = Role::query()->where('code', Role::BOARD_PRESIDENT)->first();
+        $boardTreasurer = Role::query()->where('code', Role::BOARD_TREASURER)->first();
+        $boardSecretary = Role::query()->where('code', Role::BOARD_SECRETARY)->first();
+        $boardMember = Role::query()->where('code', Role::BOARD_MEMBER)->first();
+        $accountant = Role::query()->where('code', Role::ACCOUNTANT)->first();
 
         $seniorAdmin?->permissions()->sync($permissions->values()->all());
 
         $condominiumAdmin?->permissions()->sync($permissions->only([
             'admin.access',
+            'condominium.access',
             'houses.manage',
             'residents.manage',
             'fees.manage',
+            'fees.view',
             'payments.manage',
+            'payments.view',
             'payment_methods.manage',
             'invitations.manage',
             'audit_logs.view',
+            'board.manage',
+            'board.view',
+            'reports.view',
         ])->values()->all());
 
         $resident?->permissions()->sync($permissions->only([
@@ -189,6 +225,46 @@ class DatabaseSeeder extends Seeder
             'resident.balance.view',
             'resident.payments.view',
         ])->values()->all());
+
+        $boardPresident?->permissions()->sync($permissions->only([
+            'condominium.access',
+            'board.manage',
+            'board.view',
+            'fees.view',
+            'payments.view',
+            'reports.view',
+            'audit_logs.view',
+        ])->values()->all());
+
+        $boardTreasurer?->permissions()->sync($permissions->only([
+            'condominium.access',
+            'board.view',
+            'fees.view',
+            'payments.view',
+            'payments.manage',
+            'reports.view',
+            'audit_logs.view',
+        ])->values()->all());
+
+        $boardSecretary?->permissions()->sync($permissions->only([
+            'condominium.access',
+            'board.manage',
+            'board.view',
+            'reports.view',
+        ])->values()->all());
+
+        $boardMember?->permissions()->sync($permissions->only([
+            'condominium.access',
+            'board.view',
+        ])->values()->all());
+
+        $accountant?->permissions()->sync($permissions->only([
+            'condominium.access',
+            'fees.view',
+            'payments.view',
+            'reports.view',
+            'audit_logs.view',
+        ])->values()->all());
     }
 
     private function seedResidentOperationalRoles(): void
@@ -203,6 +279,26 @@ class DatabaseSeeder extends Seeder
             ], [
                 'name' => $role['name'],
                 'scope' => Permission::SCOPE_RESIDENT,
+                'is_system' => false,
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    private function seedBoardOperationalRoles(): void
+    {
+        foreach ([
+            ['code' => Role::BOARD_PRESIDENT, 'name' => 'Presidente de directiva'],
+            ['code' => Role::BOARD_TREASURER, 'name' => 'Tesorero de directiva'],
+            ['code' => Role::BOARD_SECRETARY, 'name' => 'Secretario de directiva'],
+            ['code' => Role::BOARD_MEMBER, 'name' => 'Miembro de directiva'],
+            ['code' => Role::ACCOUNTANT, 'name' => 'Contador externo'],
+        ] as $role) {
+            Role::query()->updateOrCreate([
+                'code' => $role['code'],
+            ], [
+                'name' => $role['name'],
+                'scope' => Permission::SCOPE_CONDOMINIUM,
                 'is_system' => false,
                 'is_active' => true,
             ]);

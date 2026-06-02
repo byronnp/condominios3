@@ -4,6 +4,7 @@ namespace App\Models\Condominium;
 
 use App\Models\Billing\CondominiumFeeRate;
 use App\Models\Billing\CondominiumPaymentMethod;
+use App\Models\Board\BoardTerm;
 use App\Models\Catalog\CatalogItem;
 use App\Models\Catalog\CustomField;
 use App\Models\User;
@@ -74,5 +75,10 @@ class Condominium extends Model
     public function paymentMethods(): HasMany
     {
         return $this->hasMany(CondominiumPaymentMethod::class);
+    }
+
+    public function boardTerms(): HasMany
+    {
+        return $this->hasMany(BoardTerm::class);
     }
 }
