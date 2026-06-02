@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCondominiumAdminRequest;
+use App\Http\Requests\Admin\UpdateCondominiumAdminRequest;
 use App\Models\Condominium\Condominium;
 use App\Models\User;
 use App\Services\Condominium\CondominiumAdminService;
 use App\Transformers\CondominiumAdminTransformer;
 use App\Transformers\UserTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class CondominiumAdminController extends Controller
 {
-    public function all(Request $request): JsonResponse
+    public function __construct(
+        private readonly CondominiumAdminService $admins,
+    ) {}
+
+    public function all(Request $request)
     {
         if (! $request->user()->hasPermission('admins.manage')) {
             return $this->responder->error('Solo el administrador senior puede ver todos los administradores.', 403)->respond();
@@ -32,7 +36,7 @@ class CondominiumAdminController extends Controller
             ->respond();
     }
 
-    public function index(Request $request, Condominium $condominium): JsonResponse
+    public function index(Request $request, Condominium $condominium)
     {
         if (! $request->user()->hasPermission('admins.manage')) {
             return $this->responder->error('Solo el administrador senior puede ver administradores por condominio.', 403)->respond();
@@ -44,32 +48,11 @@ class CondominiumAdminController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, Condominium $condominium, CondominiumAdminService $admins): JsonResponse
+    public function store(StoreCondominiumAdminRequest $request, Condominium $condominium)
     {
-        if (! $request->user()->hasPermission('admins.manage')) {
-            return $this->responder->error('Solo el administrador senior puede asignar administradores.', 403)->respond();
-        }
+        $data = $request->validated();
 
-        $existingUser = User::query()->where('email', $request->input('email'))->first();
-
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:120'],
-            'last_name' => ['required', 'string', 'max:120'],
-            'identification_type_id' => ['required', 'exists:catalog_items,id'],
-            'identification_number' => [
-                'required',
-                'string',
-                'max:30',
-                Rule::unique('users', 'identification_number')->ignore($existingUser?->id),
-            ],
-            'mobile_phone' => ['nullable', 'string', 'max:30'],
-            'landline_phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['required', 'email', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'condominium')->where('is_active', true)],
-        ]);
-
-        $user = $admins->assign($condominium, $data, $request->user());
+        $user = $this->admins->assign($condominium, $data, $request->user());
 
         return $this->responder
             ->success($user->load(['managedCondominiums', 'identificationType', 'userRole']), [UserTransformer::class, 'transform'], 201)
@@ -77,34 +60,11 @@ class CondominiumAdminController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, Condominium $condominium, User $admin, CondominiumAdminService $admins): JsonResponse
+    public function update(UpdateCondominiumAdminRequest $request, Condominium $condominium, User $admin)
     {
-        if (! $request->user()->hasPermission('admins.manage')) {
-            return $this->responder->error('Solo el administrador senior puede editar administradores de condominio.', 403)->respond();
-        }
+        $data = $request->validated();
 
-        if (! $condominium->administrators()->where('users.id', $admin->id)->exists()) {
-            return $this->responder->error('Administrador no asignado al condominio.', 404)->respond();
-        }
-
-        $data = $request->validate([
-            'first_name' => ['sometimes', 'string', 'max:120'],
-            'last_name' => ['sometimes', 'string', 'max:120'],
-            'identification_type_id' => ['sometimes', 'exists:catalog_items,id'],
-            'identification_number' => [
-                'sometimes',
-                'string',
-                'max:30',
-                Rule::unique('users', 'identification_number')->ignore($admin->id),
-            ],
-            'mobile_phone' => ['nullable', 'string', 'max:30'],
-            'landline_phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($admin->id)],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'condominium')->where('is_active', true)],
-        ]);
-
-        $admin = $admins->update($condominium, $admin, $data);
+        $admin = $this->admins->update($condominium, $admin, $data);
 
         return $this->responder
             ->success($admin->load(['managedCondominiums', 'identificationType', 'userRole']), [UserTransformer::class, 'transform'])
@@ -112,13 +72,13 @@ class CondominiumAdminController extends Controller
             ->respond();
     }
 
-    public function destroy(Request $request, Condominium $condominium, User $admin, CondominiumAdminService $admins): JsonResponse
+    public function destroy(Request $request, Condominium $condominium, User $admin)
     {
         if (! $request->user()->hasPermission('admins.manage')) {
             return $this->responder->error('Solo el administrador senior puede eliminar administradores de condominio.', 403)->respond();
         }
 
-        if (! $admins->remove($condominium, $admin)) {
+        if (! $this->admins->remove($condominium, $admin)) {
             return $this->responder->error('Administrador no asignado al condominio.', 404)->respond();
         }
 

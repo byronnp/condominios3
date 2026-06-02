@@ -12,14 +12,13 @@ use App\Models\Condominium\Condominium;
 use App\Models\Condominium\House;
 use App\Transformers\CondominiumTransformer;
 use App\Transformers\HouseTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CondominiumController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         if (! $request->user()->isSeniorAdmin()) {
             $houses = House::query()
@@ -64,7 +63,7 @@ class CondominiumController extends Controller
             ->respond();
     }
 
-    public function show(Request $request, Condominium $condominium): JsonResponse
+    public function show(Request $request, Condominium $condominium)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
@@ -100,7 +99,7 @@ class CondominiumController extends Controller
             ->respond();
     }
 
-    public function destroy(Request $request, Condominium $condominium): JsonResponse
+    public function destroy(Request $request, Condominium $condominium)
     {
         if (! $request->user()->hasPermission('condominiums.manage')) {
             return $this->responder->error('Solo el administrador senior puede eliminar condominios.', 403)->respond();

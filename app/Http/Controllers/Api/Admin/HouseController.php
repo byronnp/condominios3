@@ -10,14 +10,13 @@ use App\Models\Condominium\House;
 use App\Services\Condominium\CreateHouseService;
 use App\Services\Condominium\UpdateHouseService;
 use App\Transformers\HouseTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class HouseController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $houses = House::query()
             ->with([
@@ -49,7 +48,7 @@ class HouseController extends Controller
             ->respond();
     }
 
-    public function show(Request $request, House $house): JsonResponse
+    public function show(Request $request, House $house)
     {
         $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'houses.manage');
 

@@ -90,6 +90,15 @@ return $this->responder
     ->respond();
 ```
 
+Controllers should stay thin: validate input, authorize the user, call application services, audit significant actions, and return transformed responses. Do not put payment transactions, fee balance recalculation, advance-payment period planning, invitation acceptance, or condominium-admin assignment logic directly in controllers. Use the existing services:
+
+- `App\Services\Billing\PaymentRegistrationService` for creating payments, advance-payment batches, and refreshing fee-charge balances.
+- `App\Services\Billing\AdvancePaymentPlanner` for advance-payment previews and payable-period calculation.
+- `App\Services\Resident\HouseInvitationService` for creating and accepting house invitations.
+- `App\Services\Condominium\CondominiumAdminService` for assigning, updating, and removing condominium administrators.
+
+Use `FormRequest` classes under `app/Http/Requests` for endpoint validation when a controller action accepts structured input. Put permission checks in `authorize()` only when the action must reject unauthorized users before validation, preserving the API's expected `403` behavior. Keep route-model authorization and cross-record business validation in services or controller authorization helpers when it depends on loaded domain state.
+
 ## Testing Guidelines
 
 Use PHPUnit through Laravel’s test runner. Place HTTP/API behavior tests in `tests/Feature` and isolated logic tests in `tests/Unit`. Name tests after the behavior being verified, for example `ResidentCanAcceptHouseInvitationTest.php`.

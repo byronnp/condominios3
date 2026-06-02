@@ -3,60 +3,65 @@
 namespace App\Http\Controllers\Api\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Resident\PreviewAdvancePaymentRequest;
+use App\Http\Requests\Resident\StoreAdvancePaymentRequest;
 use App\Models\Condominium\House;
-use App\Services\Billing\AdvancePaymentService;
+use App\Services\Audit\AuditLogger;
+use App\Services\Billing\AdvancePaymentPlanner;
+use App\Services\Billing\PaymentRegistrationService;
 use App\Transformers\PaymentBatchTransformer;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AdvancePaymentController extends Controller
 {
-    public function preview(Request $request, House $house, AdvancePaymentService $advancePayments): JsonResponse
-    {
-        $this->abortUnlessCanPay($request, $house);
+    public function __construct(
+        private readonly AdvancePaymentPlanner $planner,
+        private readonly PaymentRegistrationService $payments,
+        private readonly AuditLogger $audit,
+    ) {}
 
-        $data = $request->validate([
-            'months' => ['required', 'integer', 'min:1', 'max:24'],
-            'from_period' => ['nullable', 'date_format:Y-m'],
-        ]);
+    public function preview(PreviewAdvancePaymentRequest $request, House $house)
+    {
+        $data = $request->validated();
 
         return $this->responder
-            ->success($advancePayments->preview($house, $data))
+            ->success($this->planner->preview($house, $data['months'], $data['from_period'] ?? null))
             ->message('Adelanto calculado correctamente.')
             ->respond();
     }
 
-    public function store(Request $request, House $house, AdvancePaymentService $advancePayments): JsonResponse
+    public function store(
+        StoreAdvancePaymentRequest $request,
+        House $house
+    )
     {
-        $this->abortUnlessCanPay($request, $house);
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'months' => ['required', 'integer', 'min:1', 'max:24'],
-            'from_period' => ['nullable', 'date_format:Y-m'],
-            'condominium_payment_method_id' => ['nullable', 'exists:condominium_payment_methods,id'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'paid_at' => ['nullable', 'date'],
-            'notes' => ['nullable', 'string'],
-        ]);
+        $periods = $this->planner->periods($house, $data['months'], $data['from_period'] ?? null);
+        $batch = $this->payments->registerAdvancePayment($house, $periods, $data, $request->user());
 
-        $batch = $advancePayments->create($house, $data, $request->user(), $request);
+        $batch->load(['house', 'paymentMethod', 'condominiumPaymentMethod.paymentMethod', 'payments.feeCharge', 'payments.paymentMethod', 'payments.condominiumPaymentMethod.paymentMethod']);
+        $this->audit->record(
+            action: 'payment.advance_created',
+            module: 'payments',
+            condominiumId: $house->condominium_id,
+            user: $request->user(),
+            entity: $batch,
+            description: 'Pago adelantado registrado para casa '.$house->code.' por '.$data['months'].' meses.',
+            newValues: [
+                'total_amount' => $batch->total_amount,
+                'house_code' => $house->code,
+            ],
+            metadata: [
+                'periods' => $periods,
+                'reference' => $batch->reference,
+                'payment_method' => $batch->condominiumPaymentMethod?->display_name ?? $batch->paymentMethod?->name,
+            ],
+            request: $request,
+        );
 
         return $this->responder
             ->success($batch, [PaymentBatchTransformer::class, 'transform'], 201)
             ->message('Pago adelantado registrado correctamente.')
             ->respond();
-    }
-
-    private function abortUnlessCanPay(Request $request, House $house): void
-    {
-        $membership = $request->user()
-            ->houses()
-            ->where('houses.id', $house->id)
-            ->wherePivotNotNull('approved_at')
-            ->first();
-
-        if (! $membership || ! $request->user()->hasHousePermission('resident.payments.create', $house->id)) {
-            abort(403, 'No autorizado para pagar alicuotas de esta casa.');
-        }
     }
 }

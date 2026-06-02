@@ -7,13 +7,17 @@ use App\Models\Condominium\House;
 use App\Services\Resident\HouseInvitationService;
 use App\Transformers\HouseInvitationTransformer;
 use App\Transformers\HouseTransformer;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class HouseInvitationController extends Controller
 {
-    public function index(Request $request, House $house): JsonResponse
+    public function __construct(
+        private readonly HouseInvitationService $invitations,
+        private readonly AuditLogger $audit,
+    ) {}
+
+    public function index(Request $request, House $house)
     {
         if (! $this->canInvite($request, $house)) {
             return $this->responder->error('No autorizado para ver invitaciones de esta casa.', 403)->respond();
@@ -27,9 +31,7 @@ class HouseInvitationController extends Controller
 
     public function store(Request $request, House $house, HouseInvitationService $invitations): JsonResponse
     {
-        if (! $this->canInvite($request, $house)) {
-            return $this->responder->error('No autorizado para invitar usuarios a esta casa.', 403)->respond();
-        }
+        $data = $request->validated();
 
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
