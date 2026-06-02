@@ -5,6 +5,7 @@ namespace App\Support;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 
 class ApiResponseBuilder
@@ -64,7 +65,7 @@ class ApiResponseBuilder
         return $this;
     }
 
-    public function respond()
+    public function respond(): JsonResponse
     {
         $payload = [
             'success' => $this->ok,

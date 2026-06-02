@@ -8,18 +8,14 @@ use App\Http\Requests\Api\Admin\Payment\StorePaymentRequest;
 use App\Models\Billing\FeeCharge;
 use App\Services\Billing\RegisterPaymentService;
 use App\Transformers\PaymentTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function __construct(
-        private readonly PaymentRegistrationService $payments,
-        private readonly AuditLogger $audit,
-    ) {}
-
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $payments = Payment::query()
             ->with(['house.condominium', 'feeCharge', 'registeredBy', 'paymentMethod', 'condominiumPaymentMethod.paymentMethod'])

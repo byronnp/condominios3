@@ -9,6 +9,7 @@ use App\Services\Audit\AuditLogger;
 use App\Services\JwtService;
 use App\Support\ResourceActions;
 use App\Transformers\UserTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cookie;
@@ -24,7 +25,7 @@ class AuthController extends Controller
         parent::__construct();
     }
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:120'],
@@ -57,7 +58,7 @@ class AuthController extends Controller
             ->respond();
     }
 
-    public function login(Request $request, AuditLogger $audit)
+    public function login(Request $request, AuditLogger $audit): JsonResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -110,7 +111,7 @@ class AuthController extends Controller
             ->withCookie($this->authCookie($token));
     }
 
-    public function me(Request $request)
+    public function me(Request $request): JsonResponse
     {
         return $this->responder->success([
             'user' => UserTransformer::transform($request->user()->load(['identificationType', 'userRole'])),
@@ -119,7 +120,7 @@ class AuthController extends Controller
         ])->message('Usuario autenticado.')->respond();
     }
 
-    public function logout(Request $request, AuditLogger $audit)
+    public function logout(Request $request, AuditLogger $audit): JsonResponse
     {
         $session = $request->attributes->get('auth_session');
         $now = Carbon::now();

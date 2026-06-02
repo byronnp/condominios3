@@ -6,13 +6,14 @@ use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Audit\AuditLog;
 use App\Transformers\AuditLogTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $logs = AuditLog::query()
             ->with(['condominium', 'user'])

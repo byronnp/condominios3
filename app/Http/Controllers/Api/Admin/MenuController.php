@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Menu\Menu;
 use App\Transformers\MenuTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MenuController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->abortUnlessSeniorAdmin($request);
 
@@ -27,7 +28,7 @@ class MenuController extends Controller
             ->respond();
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $this->abortUnlessSeniorAdmin($request);
 
@@ -55,7 +56,7 @@ class MenuController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, Menu $menu)
+    public function update(Request $request, Menu $menu): JsonResponse
     {
         $this->abortUnlessSeniorAdmin($request);
 

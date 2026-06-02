@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Auth\Role;
 use App\Transformers\RoleTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 
@@ -27,7 +28,7 @@ class RoleController extends Controller
             ->respond();
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 
@@ -60,7 +61,7 @@ class RoleController extends Controller
             ->respond();
     }
 
-    public function show(Request $request, Role $role)
+    public function show(Request $request, Role $role): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 
@@ -70,7 +71,7 @@ class RoleController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, Role $role)
+    public function update(Request $request, Role $role): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 
@@ -96,7 +97,7 @@ class RoleController extends Controller
             ->respond();
     }
 
-    public function destroy(Request $request, Role $role)
+    public function destroy(Request $request, Role $role): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 
@@ -112,7 +113,7 @@ class RoleController extends Controller
             ->respond();
     }
 
-    public function syncPermissions(Request $request, Role $role)
+    public function syncPermissions(Request $request, Role $role): JsonResponse
     {
         $this->abortUnlessCanManageRoles($request);
 

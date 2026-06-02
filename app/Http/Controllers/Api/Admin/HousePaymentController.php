@@ -6,13 +6,14 @@ use App\Http\Controllers\Api\Admin\Concerns\AuthorizesCondominiumAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Condominium\House;
 use App\Transformers\PaymentTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class HousePaymentController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request, House $house)
+    public function index(Request $request, House $house): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $house->condominium_id, 'payments.manage');
 

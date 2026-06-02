@@ -10,6 +10,7 @@ use App\Models\Condominium\House;
 use App\Services\Billing\CreateFeeChargeService;
 use App\Services\Billing\GenerateFeeChargesForMonthService;
 use App\Transformers\FeeChargeTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ class FeeChargeController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $charges = FeeCharge::query()
             ->with('house.condominium')

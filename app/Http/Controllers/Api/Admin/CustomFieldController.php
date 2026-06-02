@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Catalog\CustomField;
 use App\Models\Condominium\Condominium;
 use App\Transformers\CustomFieldTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class CustomFieldController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request, Condominium $condominium)
+    public function index(Request $request, Condominium $condominium): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
@@ -24,7 +25,7 @@ class CustomFieldController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, Condominium $condominium)
+    public function store(Request $request, Condominium $condominium): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'houses.manage');
 
@@ -45,7 +46,7 @@ class CustomFieldController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, CustomField $customField)
+    public function update(Request $request, CustomField $customField): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $customField->condominium_id, 'houses.manage');
 

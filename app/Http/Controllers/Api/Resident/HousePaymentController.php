@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Api\Resident;
 use App\Http\Controllers\Controller;
 use App\Models\Condominium\House;
 use App\Transformers\PaymentTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class HousePaymentController extends Controller
 {
-    public function index(Request $request, House $house)
+    public function index(Request $request, House $house): JsonResponse
     {
         $membership = $request->user()
             ->houses()

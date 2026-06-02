@@ -9,13 +9,14 @@ use App\Models\Catalog\CatalogItem;
 use App\Models\Condominium\Condominium;
 use App\Services\Audit\AuditLogger;
 use App\Transformers\CondominiumPaymentMethodTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CondominiumPaymentMethodController extends Controller
 {
     use AuthorizesCondominiumAccess;
 
-    public function index(Request $request, Condominium $condominium)
+    public function index(Request $request, Condominium $condominium): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'payment_methods.manage');
 
@@ -32,7 +33,7 @@ class CondominiumPaymentMethodController extends Controller
             ->respond();
     }
 
-    public function store(Request $request, Condominium $condominium, AuditLogger $audit)
+    public function store(Request $request, Condominium $condominium, AuditLogger $audit): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominium->id, 'payment_methods.manage');
 
@@ -80,7 +81,7 @@ class CondominiumPaymentMethodController extends Controller
             ->respond();
     }
 
-    public function update(Request $request, CondominiumPaymentMethod $condominiumPaymentMethod, AuditLogger $audit)
+    public function update(Request $request, CondominiumPaymentMethod $condominiumPaymentMethod, AuditLogger $audit): JsonResponse
     {
         $this->abortUnlessCanManageCondominium($request->user(), $condominiumPaymentMethod->condominium_id, 'payment_methods.manage');
 
