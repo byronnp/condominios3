@@ -84,7 +84,7 @@
                                                             "type": "integer"
                                                         },
                                                         "months": {
-                                                            "type": "string"
+                                                            "type": "integer"
                                                         },
                                                         "from_period": {
                                                             "type": "string"
@@ -312,13 +312,16 @@
                                         "data": {
                                             "anyOf": [
                                                 {
-                                                    "type": "string"
+                                                    "$ref": "#/components/schemas/PaymentBatch"
                                                 },
                                                 {
                                                     "type": "null"
                                                 },
                                                 {
                                                     "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
                                                 }
                                             ]
                                         },
@@ -1233,6 +1236,804 @@
                 }
             }
         },
+        "/admin/board-terms/{boardTerm}/members": {
+            "post": {
+                "operationId": "boardMember.store",
+                "tags": [
+                    "BoardMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "boardTerm",
+                        "in": "path",
+                        "required": true,
+                        "description": "The board term ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBoardMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Miembro de directiva asignado correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BoardMember"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/board-members/{boardMember}": {
+            "patch": {
+                "operationId": "boardMember.update",
+                "tags": [
+                    "BoardMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "boardMember",
+                        "in": "path",
+                        "required": true,
+                        "description": "The board member ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBoardMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Miembro de directiva actualizado correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BoardMember"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "boardMember.destroy",
+                "tags": [
+                    "BoardMember"
+                ],
+                "parameters": [
+                    {
+                        "name": "boardMember",
+                        "in": "path",
+                        "required": true,
+                        "description": "The board member ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Miembro de directiva removido correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/admin/condominiums/{condominium}/board-terms": {
+            "get": {
+                "operationId": "boardTerm.index",
+                "tags": [
+                    "BoardTerm"
+                ],
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "description": "The condominium ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Directivas obtenidas correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/BoardTerm"
+                                                            }
+                                                        },
+                                                        "first_page_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "from": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 1
+                                                        },
+                                                        "last_page_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "links": {
+                                                            "type": "array",
+                                                            "description": "Generated paginator links.",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "url": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "active": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "url",
+                                                                    "label",
+                                                                    "active"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "next_page_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "path": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Base path for paginator generated URLs."
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "description": "Number of items shown per page.",
+                                                            "minimum": 0
+                                                        },
+                                                        "prev_page_url": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "to": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "Number of the last item in the slice.",
+                                                            "minimum": 1
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "description": "Total number of items being paginated.",
+                                                            "minimum": 0
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "current_page",
+                                                        "data",
+                                                        "first_page_url",
+                                                        "from",
+                                                        "last_page_url",
+                                                        "last_page",
+                                                        "links",
+                                                        "next_page_url",
+                                                        "path",
+                                                        "per_page",
+                                                        "prev_page_url",
+                                                        "to",
+                                                        "total"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "boardTerm.store",
+                "tags": [
+                    "BoardTerm"
+                ],
+                "parameters": [
+                    {
+                        "name": "condominium",
+                        "in": "path",
+                        "required": true,
+                        "description": "The condominium ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBoardTermRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Directiva creada correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BoardTerm"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/admin/board-terms/{boardTerm}": {
+            "get": {
+                "operationId": "boardTerm.show",
+                "tags": [
+                    "BoardTerm"
+                ],
+                "parameters": [
+                    {
+                        "name": "boardTerm",
+                        "in": "path",
+                        "required": true,
+                        "description": "The board term ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Directiva obtenida correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BoardTerm"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "boardTerm.update",
+                "tags": [
+                    "BoardTerm"
+                ],
+                "parameters": [
+                    {
+                        "name": "boardTerm",
+                        "in": "path",
+                        "required": true,
+                        "description": "The board term ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateBoardTermRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Directiva actualizada correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/BoardTerm"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/admin/catalogs": {
             "get": {
                 "operationId": "catalogs.index",
@@ -1793,35 +2594,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "code": {
-                                        "type": "string",
-                                        "maxLength": 80
-                                    },
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "description": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "sort_order": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                    },
-                                    "is_active": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "required": [
-                                    "code",
-                                    "name"
-                                ]
+                                "$ref": "#/components/schemas/StoreCatalogItemRequest"
                             }
                         }
                     }
@@ -1960,11 +2733,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -1990,31 +2763,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "code": {
-                                        "type": "string",
-                                        "maxLength": 80
-                                    },
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "description": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "sort_order": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                    },
-                                    "is_active": {
-                                        "type": "boolean"
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UpdateCatalogItemRequest"
                             }
                         }
                     }
@@ -2153,11 +2902,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -2427,51 +3176,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "ruc": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 20
-                                    },
-                                    "address": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "city": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "sector": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "status_id": {
-                                        "type": "integer"
-                                    },
-                                    "total_houses": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                    }
-                                },
-                                "required": [
-                                    "name"
-                                ]
+                                "$ref": "#/components/schemas/StoreCondominiumRequest"
                             }
                         }
                     }
@@ -2727,48 +3432,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "ruc": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 20
-                                    },
-                                    "address": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "city": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "sector": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "status_id": {
-                                        "type": "integer"
-                                    },
-                                    "total_houses": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UpdateCondominiumRequest"
                             }
                         }
                     }
@@ -2907,11 +3571,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -3632,9 +4296,6 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "403": {
                         "description": "",
                         "content": {
@@ -3699,6 +4360,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -3863,9 +4527,6 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
@@ -3933,6 +4594,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -6092,31 +6756,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "condominium_id": {
-                                        "type": "integer"
-                                    },
-                                    "house_number": {
-                                        "type": "string",
-                                        "maxLength": 80
-                                    },
-                                    "address_reference": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "maxLength": 30
-                                    }
-                                },
-                                "required": [
-                                    "condominium_id",
-                                    "house_number"
-                                ]
+                                "$ref": "#/components/schemas/StoreHouseRequest"
                             }
                         }
                     }
@@ -6192,9 +6832,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -6310,24 +6947,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "house_number": {
-                                        "type": "string",
-                                        "maxLength": 80
-                                    },
-                                    "address_reference": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "maxLength": 30
-                                    }
-                                }
+                                "$ref": "#/components/schemas/UpdateHouseRequest"
                             }
                         }
                     }
@@ -6401,11 +7021,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -6794,71 +7414,6 @@
                                                 {
                                                     "$ref": "#/components/schemas/House"
                                                 },
-                                                {
-                                                    "type": "null"
-                                                },
-                                                {
-                                                    "type": "object"
-                                                },
-                                                {
-                                                    "type": "string"
-                                                }
-                                            ]
-                                        },
-                                        "meta": {
-                                            "type": "object",
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "string"
-                                                },
-                                                "last_page": {
-                                                    "type": "string"
-                                                },
-                                                "per_page": {
-                                                    "type": "string"
-                                                },
-                                                "total": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "current_page",
-                                                "last_page",
-                                                "per_page",
-                                                "total"
-                                            ]
-                                        },
-                                        "errors": {
-                                            "type": "null"
-                                        }
-                                    },
-                                    "required": [
-                                        "success",
-                                        "message",
-                                        "data",
-                                        "meta",
-                                        "errors"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "const": "Esta invitacion pertenece a otro correo."
-                                        },
-                                        "data": {
-                                            "anyOf": [
                                                 {
                                                     "type": "null"
                                                 },
@@ -8153,120 +8708,7 @@
                                         "data": {
                                             "anyOf": [
                                                 {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "current_page": {
-                                                            "type": "integer",
-                                                            "minimum": 1
-                                                        },
-                                                        "data": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "$ref": "#/components/schemas/Payment"
-                                                            }
-                                                        },
-                                                        "first_page_url": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "from": {
-                                                            "type": [
-                                                                "integer",
-                                                                "null"
-                                                            ],
-                                                            "minimum": 1
-                                                        },
-                                                        "last_page_url": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "last_page": {
-                                                            "type": "integer",
-                                                            "minimum": 1
-                                                        },
-                                                        "links": {
-                                                            "type": "array",
-                                                            "description": "Generated paginator links.",
-                                                            "items": {
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "url": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
-                                                                    },
-                                                                    "label": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "active": {
-                                                                        "type": "boolean"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "url",
-                                                                    "label",
-                                                                    "active"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "next_page_url": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "path": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ],
-                                                            "description": "Base path for paginator generated URLs."
-                                                        },
-                                                        "per_page": {
-                                                            "type": "integer",
-                                                            "description": "Number of items shown per page.",
-                                                            "minimum": 0
-                                                        },
-                                                        "prev_page_url": {
-                                                            "type": [
-                                                                "string",
-                                                                "null"
-                                                            ]
-                                                        },
-                                                        "to": {
-                                                            "type": [
-                                                                "integer",
-                                                                "null"
-                                                            ],
-                                                            "description": "Number of the last item in the slice.",
-                                                            "minimum": 1
-                                                        },
-                                                        "total": {
-                                                            "type": "integer",
-                                                            "description": "Total number of items being paginated.",
-                                                            "minimum": 0
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "current_page",
-                                                        "data",
-                                                        "first_page_url",
-                                                        "from",
-                                                        "last_page_url",
-                                                        "last_page",
-                                                        "links",
-                                                        "next_page_url",
-                                                        "path",
-                                                        "per_page",
-                                                        "prev_page_url",
-                                                        "to",
-                                                        "total"
-                                                    ]
+                                                    "$ref": "#/components/schemas/LengthAwarePaginator"
                                                 },
                                                 {
                                                     "type": "null"
@@ -8329,46 +8771,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "fee_charge_id": {
-                                        "type": "integer"
-                                    },
-                                    "amount": {
-                                        "type": "number",
-                                        "minimum": 0.01
-                                    },
-                                    "paid_at": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "date-time"
-                                    },
-                                    "condominium_payment_method_id": {
-                                        "type": [
-                                            "integer",
-                                            "null"
-                                        ]
-                                    },
-                                    "reference": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 255
-                                    },
-                                    "notes": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    }
-                                },
-                                "required": [
-                                    "fee_charge_id",
-                                    "amount"
-                                ]
+                                "$ref": "#/components/schemas/StorePaymentRequest"
                             }
                         }
                     }
@@ -8391,13 +8794,16 @@
                                         "data": {
                                             "anyOf": [
                                                 {
-                                                    "type": "string"
+                                                    "$ref": "#/components/schemas/Payment"
                                                 },
                                                 {
                                                     "type": "null"
                                                 },
                                                 {
                                                     "type": "object"
+                                                },
+                                                {
+                                                    "type": "string"
                                                 }
                                             ]
                                         },
@@ -8600,6 +9006,95 @@
                 }
             }
         },
+        "/admin/houses/{house}/residents": {
+            "get": {
+                "operationId": "resident.indexByHouse",
+                "tags": [
+                    "Resident"
+                ],
+                "parameters": [
+                    {
+                        "name": "house",
+                        "in": "path",
+                        "required": true,
+                        "description": "The house ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Residentes de la casa obtenidos correctamente."
+                                        },
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "string"
+                                                },
+                                                "last_page": {
+                                                    "type": "string"
+                                                },
+                                                "per_page": {
+                                                    "type": "string"
+                                                },
+                                                "total": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "last_page",
+                                                "per_page",
+                                                "total"
+                                            ]
+                                        },
+                                        "errors": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "data",
+                                        "meta",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/admin/residents": {
             "post": {
                 "operationId": "resident.store",
@@ -8611,81 +9106,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "first_name": {
-                                        "type": "string",
-                                        "maxLength": 120
-                                    },
-                                    "last_name": {
-                                        "type": "string",
-                                        "maxLength": 120
-                                    },
-                                    "identification_type_id": {
-                                        "type": "integer"
-                                    },
-                                    "identification_number": {
-                                        "type": "string",
-                                        "maxLength": 30
-                                    },
-                                    "mobile_phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 30
-                                    },
-                                    "landline_phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 30
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "maxLength": 255
-                                    },
-                                    "password": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "minLength": 8
-                                    },
-                                    "house_id": {
-                                        "type": "integer"
-                                    },
-                                    "relationship_type_id": {
-                                        "type": "integer"
-                                    },
-                                    "role_id": {
-                                        "type": "integer"
-                                    },
-                                    "is_primary": {
-                                        "type": "boolean"
-                                    },
-                                    "can_receive_notifications": {
-                                        "type": "boolean"
-                                    },
-                                    "password_confirmation": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "minLength": 8
-                                    }
-                                },
-                                "required": [
-                                    "first_name",
-                                    "last_name",
-                                    "identification_type_id",
-                                    "identification_number",
-                                    "email",
-                                    "house_id",
-                                    "relationship_type_id"
-                                ]
+                                "$ref": "#/components/schemas/StoreResidentRequest"
                             }
                         }
                     }
@@ -8759,11 +9180,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -9600,6 +10021,26 @@
                     "updated_at"
                 ],
                 "title": "AuditLog"
+            },
+            "BoardMember": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "minItems": 0,
+                "maxItems": 0,
+                "additionalItems": false,
+                "title": "BoardMember"
+            },
+            "BoardTerm": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "minItems": 0,
+                "maxItems": 0,
+                "additionalItems": false,
+                "title": "BoardTerm"
             },
             "Catalog": {
                 "type": "object",
@@ -10501,6 +10942,90 @@
                 ],
                 "title": "Payment"
             },
+            "PaymentBatch": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "house_id": {
+                        "type": "integer"
+                    },
+                    "registered_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "total_amount": {
+                        "type": "string"
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "payment_method_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "condominium_payment_method_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "house_id",
+                    "registered_by",
+                    "total_amount",
+                    "reference",
+                    "paid_at",
+                    "payment_method_id",
+                    "condominium_payment_method_id",
+                    "notes",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at"
+                ],
+                "title": "PaymentBatch"
+            },
             "Permission": {
                 "type": "object",
                 "properties": {
@@ -10610,6 +11135,535 @@
                     "updated_at"
                 ],
                 "title": "Role"
+            },
+            "StoreBoardMemberRequest": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "identification_type_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "identification_number": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "mobile_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "landline_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 8,
+                        "maxLength": 255
+                    },
+                    "position_id": {
+                        "type": "integer"
+                    },
+                    "role_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "starts_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "position_id"
+                ],
+                "title": "StoreBoardMemberRequest"
+            },
+            "StoreBoardTermRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "closed"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "name",
+                    "starts_at",
+                    "ends_at"
+                ],
+                "title": "StoreBoardTermRequest"
+            },
+            "StoreCatalogItemRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "code",
+                    "name"
+                ],
+                "title": "StoreCatalogItemRequest"
+            },
+            "StoreCondominiumRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "ruc": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "sector": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "status_id": {
+                        "type": "integer"
+                    },
+                    "total_houses": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "StoreCondominiumRequest"
+            },
+            "StoreHouseRequest": {
+                "type": "object",
+                "properties": {
+                    "condominium_id": {
+                        "type": "integer"
+                    },
+                    "house_number": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "address_reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 30
+                    }
+                },
+                "required": [
+                    "condominium_id",
+                    "house_number"
+                ],
+                "title": "StoreHouseRequest"
+            },
+            "StorePaymentRequest": {
+                "type": "object",
+                "properties": {
+                    "fee_charge_id": {
+                        "type": "integer"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "minimum": 0.01
+                    },
+                    "paid_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "condominium_payment_method_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "fee_charge_id",
+                    "amount"
+                ],
+                "title": "StorePaymentRequest"
+            },
+            "StoreResidentRequest": {
+                "type": "object",
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "identification_type_id": {
+                        "type": "integer"
+                    },
+                    "identification_number": {
+                        "type": "string",
+                        "maxLength": 30
+                    },
+                    "mobile_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 30
+                    },
+                    "landline_phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 30
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 8
+                    },
+                    "house_id": {
+                        "type": "integer"
+                    },
+                    "relationship_type_id": {
+                        "type": "integer"
+                    },
+                    "role_id": {
+                        "type": "integer"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "can_receive_notifications": {
+                        "type": "boolean"
+                    },
+                    "password_confirmation": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "minLength": 8
+                    }
+                },
+                "required": [
+                    "first_name",
+                    "last_name",
+                    "identification_type_id",
+                    "identification_number",
+                    "email",
+                    "house_id",
+                    "relationship_type_id"
+                ],
+                "title": "StoreResidentRequest"
+            },
+            "UpdateBoardMemberRequest": {
+                "type": "object",
+                "properties": {
+                    "position_id": {
+                        "type": "integer"
+                    },
+                    "role_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "title": "UpdateBoardMemberRequest"
+            },
+            "UpdateBoardTermRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 120
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "closed"
+                        ]
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "title": "UpdateBoardTermRequest"
+            },
+            "UpdateCatalogItemRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "title": "UpdateCatalogItemRequest"
+            },
+            "UpdateCondominiumRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "ruc": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 20
+                    },
+                    "address": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "sector": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "status_id": {
+                        "type": "integer"
+                    },
+                    "total_houses": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "title": "UpdateCondominiumRequest"
+            },
+            "UpdateHouseRequest": {
+                "type": "object",
+                "properties": {
+                    "house_number": {
+                        "type": "string",
+                        "maxLength": 80
+                    },
+                    "address_reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "status": {
+                        "type": "string",
+                        "maxLength": 30
+                    }
+                },
+                "title": "UpdateHouseRequest"
             },
             "User": {
                 "type": "object",
