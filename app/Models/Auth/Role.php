@@ -2,11 +2,15 @@
 
 namespace App\Models\Auth;
 
+use App\Models\Condominium\Condominium;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Schema;
 
 #[Fillable([
+    'condominium_id',
     'code',
     'name',
     'description',
@@ -53,9 +57,15 @@ class Role extends Model
     protected function casts(): array
     {
         return [
+            'condominium_id' => 'integer',
             'is_system' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function condominium(): BelongsTo
+    {
+        return $this->belongsTo(Condominium::class);
     }
 
     public function permissions(): BelongsToMany
@@ -64,8 +74,24 @@ class Role extends Model
             ->withTimestamps();
     }
 
-    public static function idForCode(string $code): ?int
+    public static function idForCode(string $code, ?int $condominiumId = null): ?int
     {
-        return static::query()->where('code', $code)->value('id');
+        $query = static::query()->where('code', $code);
+
+        if (! Schema::hasColumn('roles', 'condominium_id')) {
+            return $query->value('id');
+        }
+
+        if ($condominiumId) {
+            $query
+                ->where(fn ($query) => $query
+                    ->where('condominium_id', $condominiumId)
+                    ->orWhereNull('condominium_id'))
+                ->orderByRaw('case when condominium_id = ? then 0 else 1 end', [$condominiumId]);
+        } else {
+            $query->whereNull('condominium_id');
+        }
+
+        return $query->value('id');
     }
 }

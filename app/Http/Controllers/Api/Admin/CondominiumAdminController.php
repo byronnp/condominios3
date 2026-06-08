@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Condominium\Condominium;
 use App\Models\User;
 use App\Services\Condominium\CondominiumAdminService;
+use App\Support\RoleRules;
 use App\Transformers\CondominiumAdminTransformer;
 use App\Transformers\UserTransformer;
 use Illuminate\Http\JsonResponse;
@@ -66,7 +67,7 @@ class CondominiumAdminController extends Controller
             'landline_phone' => ['nullable', 'string', 'max:30'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'condominium')->where('is_active', true)],
+            'role_id' => ['sometimes', RoleRules::activeInScopeForCondominium('condominium', $condominium->id)],
         ]);
 
         $user = $admins->assign($condominium, $data, $request->user());
@@ -101,7 +102,7 @@ class CondominiumAdminController extends Controller
             'landline_phone' => ['nullable', 'string', 'max:30'],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($admin->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'condominium')->where('is_active', true)],
+            'role_id' => ['sometimes', RoleRules::activeInScopeForCondominium('condominium', $condominium->id)],
         ]);
 
         $admin = $admins->update($condominium, $admin, $data);

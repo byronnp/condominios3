@@ -29,7 +29,7 @@ class HouseInvitationService
             'house_id' => $house->id,
             'email' => $data['email'],
             'relationship_type_id' => $relationshipType->id,
-            'role_id' => $data['role_id'] ?? Role::idForCode(Role::RESIDENT_VIEWER),
+            'role_id' => $data['role_id'] ?? Role::idForCode(Role::RESIDENT_VIEWER, $house->condominium_id),
             'token' => (string) Str::uuid(),
             'can_receive_notifications' => $data['can_receive_notifications'] ?? true,
             'invited_by' => $invitedBy->id,
@@ -70,7 +70,7 @@ class HouseInvitationService
         $invitation->house->users()->syncWithoutDetaching([
             $acceptedBy->id => [
                 'relationship_type_id' => $invitation->relationship_type_id,
-                'role_id' => $invitation->role_id ?? Role::idForCode(Role::RESIDENT_VIEWER),
+                'role_id' => $invitation->role_id ?? Role::idForCode(Role::RESIDENT_VIEWER, $invitation->house->condominium_id),
                 'can_receive_notifications' => $invitation->can_receive_notifications,
                 'is_primary' => false,
                 'approved_at' => Carbon::now(),

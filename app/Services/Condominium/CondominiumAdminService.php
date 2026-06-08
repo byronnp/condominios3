@@ -53,7 +53,7 @@ class CondominiumAdminService
 
         $condominium->administrators()->syncWithoutDetaching([
             $user->id => [
-                'role_id' => $data['role_id'] ?? Role::idForCode(User::ROLE_CONDOMINIUM_ADMIN),
+                'role_id' => $data['role_id'] ?? Role::idForCode(User::ROLE_CONDOMINIUM_ADMIN, $condominium->id),
                 'approved_at' => Carbon::now(),
                 'approved_by' => $approvedBy->id,
                 'deleted_at' => null,

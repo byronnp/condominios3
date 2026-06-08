@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Api\Admin\Board;
 
 use App\Models\Auth\Permission;
+use App\Models\Board\BoardTerm;
 use App\Models\Catalog\Catalog;
 use App\Models\User;
+use App\Support\RoleRules;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,7 +33,7 @@ class StoreBoardMemberRequest extends FormRequest
             'email' => ['nullable', 'required_without:user_id', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
             'position_id' => ['required', Rule::exists('catalog_items', 'id')->where('catalog_id', $this->boardPositionsCatalogId())->where('is_active', true)],
-            'role_id' => ['nullable', Rule::exists('roles', 'id')->where('scope', Permission::SCOPE_CONDOMINIUM)->where('is_active', true)],
+            'role_id' => ['nullable', RoleRules::activeInScopeForCondominium(Permission::SCOPE_CONDOMINIUM, $this->condominiumId())],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'is_active' => ['sometimes', 'boolean'],
@@ -55,5 +57,16 @@ class StoreBoardMemberRequest extends FormRequest
         }
 
         return User::query()->where('email', $this->input('email'))->value('id');
+    }
+
+    private function condominiumId(): ?int
+    {
+        $boardTerm = $this->route('boardTerm');
+
+        if ($boardTerm instanceof BoardTerm) {
+            return $boardTerm->condominium_id;
+        }
+
+        return null;
     }
 }

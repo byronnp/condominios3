@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Models\Auth\Permission;
 use App\Models\Condominium\House;
 use App\Services\Resident\HouseInvitationService;
+use App\Support\RoleRules;
 use App\Transformers\HouseInvitationTransformer;
 use App\Transformers\HouseTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class HouseInvitationController extends Controller
 {
@@ -34,7 +35,7 @@ class HouseInvitationController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'relationship_type_id' => ['required', 'exists:catalog_items,id'],
-            'role_id' => ['sometimes', Rule::exists('roles', 'id')->where('scope', 'resident')->where('is_active', true)],
+            'role_id' => ['sometimes', RoleRules::activeInScopeForCondominium(Permission::SCOPE_RESIDENT, $house->condominium_id)],
             'can_receive_notifications' => ['sometimes', 'boolean'],
         ]);
         $invitation = $invitations->create($house, $data, $request->user(), $request);

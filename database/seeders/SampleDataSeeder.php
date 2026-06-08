@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auth\Permission;
 use App\Models\Auth\Role;
 use App\Models\Billing\CondominiumFeeRate;
 use App\Models\Billing\CondominiumPaymentMethod;
@@ -75,6 +76,7 @@ class SampleDataSeeder extends Seeder
             ->where('payment_method_id', $transferPaymentMethod->id)
             ->firstOrFail();
         $this->feeRate($ceibos, 40);
+        $ceibosRoles = $this->seedCondominiumRoles($ceibos);
 
         $ceibosAdmin = User::query()->updateOrCreate([
             'email' => 'admin.ceibos@test.com',
@@ -91,7 +93,7 @@ class SampleDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $this->assignCondominiumAdmin($ceibos, $ceibosAdmin, $seniorAdmin);
+        $this->assignCondominiumAdmin($ceibos, $ceibosAdmin, $seniorAdmin, $ceibosRoles[Role::CONDOMINIUM_ADMIN]->id);
 
         $houseA01 = House::query()->updateOrCreate([
             'condominium_id' => $ceibos->id,
@@ -146,7 +148,7 @@ class SampleDataSeeder extends Seeder
         $houseA01->users()->syncWithoutDetaching([
             $owner->id => [
                 'relationship_type_id' => $ownerType->id,
-                'role_id' => Role::idForCode(Role::RESIDENT_OWNER),
+                'role_id' => $ceibosRoles[Role::RESIDENT_OWNER]->id,
                 'can_receive_notifications' => true,
                 'is_primary' => true,
                 'approved_at' => Carbon::now(),
@@ -154,7 +156,7 @@ class SampleDataSeeder extends Seeder
             ],
             $family->id => [
                 'relationship_type_id' => $familyType->id,
-                'role_id' => Role::idForCode(Role::RESIDENT_VIEWER),
+                'role_id' => $ceibosRoles[Role::RESIDENT_VIEWER]->id,
                 'can_receive_notifications' => true,
                 'is_primary' => false,
                 'approved_at' => Carbon::now(),
@@ -184,7 +186,7 @@ class SampleDataSeeder extends Seeder
             'email' => 'invitado@test.com',
         ], [
             'relationship_type_id' => $familyType->id,
-            'role_id' => Role::idForCode(Role::RESIDENT_VIEWER),
+            'role_id' => $ceibosRoles[Role::RESIDENT_VIEWER]->id,
             'token' => (string) Str::uuid(),
             'can_receive_notifications' => true,
             'invited_by' => $owner->id,
@@ -205,6 +207,7 @@ class SampleDataSeeder extends Seeder
 
         $this->configureCondominium($prados, $paymentMethods);
         $this->feeRate($prados, 55);
+        $pradosRoles = $this->seedCondominiumRoles($prados);
 
         $pradosAdmin = User::query()->updateOrCreate([
             'email' => 'admin.prados@test.com',
@@ -221,7 +224,7 @@ class SampleDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $this->assignCondominiumAdmin($prados, $pradosAdmin, $seniorAdmin);
+        $this->assignCondominiumAdmin($prados, $pradosAdmin, $seniorAdmin, $pradosRoles[Role::CONDOMINIUM_ADMIN]->id);
 
         $houseB01 = House::query()->updateOrCreate([
             'condominium_id' => $prados->id,
@@ -261,7 +264,7 @@ class SampleDataSeeder extends Seeder
         $houseB01->users()->syncWithoutDetaching([
             $pradosOwner->id => [
                 'relationship_type_id' => $ownerType->id,
-                'role_id' => Role::idForCode(Role::RESIDENT_OWNER),
+                'role_id' => $pradosRoles[Role::RESIDENT_OWNER]->id,
                 'can_receive_notifications' => true,
                 'is_primary' => true,
                 'approved_at' => Carbon::now(),
@@ -337,11 +340,99 @@ class SampleDataSeeder extends Seeder
         };
     }
 
-    private function assignCondominiumAdmin(Condominium $condominium, User $condominiumAdmin, User $seniorAdmin): void
+    /**
+     * @return array<string, Role>
+     */
+    private function seedCondominiumRoles(Condominium $condominium): array
+    {
+        $permissions = Permission::query()->pluck('id', 'code');
+        $roles = [];
+
+        foreach ([
+            Role::CONDOMINIUM_ADMIN => [
+                'name' => 'Administrador '.$condominium->name,
+                'scope' => Permission::SCOPE_CONDOMINIUM,
+                'permissions' => [
+                    'admin.access',
+                    'condominium.access',
+                    'houses.manage',
+                    'residents.manage',
+                    'fees.manage',
+                    'fees.view',
+                    'payments.manage',
+                    'payments.view',
+                    'payment_methods.manage',
+                    'invitations.manage',
+                    'audit_logs.view',
+                    'board.manage',
+                    'board.view',
+                    'reports.view',
+                ],
+            ],
+            Role::BOARD_TREASURER => [
+                'name' => 'Tesorero '.$condominium->name,
+                'scope' => Permission::SCOPE_CONDOMINIUM,
+                'permissions' => [
+                    'condominium.access',
+                    'board.view',
+                    'fees.view',
+                    'payments.view',
+                    'payments.manage',
+                    'reports.view',
+                    'audit_logs.view',
+                ],
+            ],
+            Role::RESIDENT_OWNER => [
+                'name' => 'Residente propietario '.$condominium->name,
+                'scope' => Permission::SCOPE_RESIDENT,
+                'permissions' => [
+                    'resident.balance.view',
+                    'resident.payments.view',
+                    'resident.payments.create',
+                    'resident.invitations.create',
+                ],
+            ],
+            Role::RESIDENT_PAYER => [
+                'name' => 'Residente pagador '.$condominium->name,
+                'scope' => Permission::SCOPE_RESIDENT,
+                'permissions' => [
+                    'resident.balance.view',
+                    'resident.payments.view',
+                    'resident.payments.create',
+                ],
+            ],
+            Role::RESIDENT_VIEWER => [
+                'name' => 'Residente lector '.$condominium->name,
+                'scope' => Permission::SCOPE_RESIDENT,
+                'permissions' => [
+                    'resident.balance.view',
+                    'resident.payments.view',
+                ],
+            ],
+        ] as $code => $data) {
+            $role = Role::query()->updateOrCreate([
+                'condominium_id' => $condominium->id,
+                'code' => $code,
+            ], [
+                'name' => $data['name'],
+                'scope' => $data['scope'],
+                'description' => 'Rol de ejemplo para '.$condominium->name.'.',
+                'is_system' => false,
+                'is_active' => true,
+            ]);
+
+            $role->permissions()->sync($permissions->only($data['permissions'])->values()->all());
+            $roles[$code] = $role;
+        }
+
+        return $roles;
+    }
+
+    private function assignCondominiumAdmin(Condominium $condominium, User $condominiumAdmin, User $seniorAdmin, int $roleId): void
     {
         $condominium->administrators()->syncWithoutDetaching([
             $condominiumAdmin->id => [
-                'role_id' => Role::idForCode(User::ROLE_CONDOMINIUM_ADMIN),
+                'role_id' => $roleId,
                 'approved_at' => Carbon::now(),
                 'approved_by' => $seniorAdmin->id,
                 'deleted_at' => null,

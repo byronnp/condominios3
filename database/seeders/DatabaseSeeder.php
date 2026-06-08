@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         foreach (Role::defaults() as $role) {
             Role::query()->updateOrCreate([
+                'condominium_id' => null,
                 'code' => $role['code'],
             ], [
                 'name' => $role['name'],
@@ -174,16 +175,16 @@ class DatabaseSeeder extends Seeder
         $permissions = Permission::query()->pluck('id', 'code');
 
         $seniorAdmin = Role::query()->where('code', Role::SENIOR_ADMIN)->first();
-        $condominiumAdmin = Role::query()->where('code', Role::CONDOMINIUM_ADMIN)->first();
-        $resident = Role::query()->where('code', Role::RESIDENT)->first();
-        $residentOwner = Role::query()->where('code', Role::RESIDENT_OWNER)->first();
-        $residentPayer = Role::query()->where('code', Role::RESIDENT_PAYER)->first();
-        $residentViewer = Role::query()->where('code', Role::RESIDENT_VIEWER)->first();
-        $boardPresident = Role::query()->where('code', Role::BOARD_PRESIDENT)->first();
-        $boardTreasurer = Role::query()->where('code', Role::BOARD_TREASURER)->first();
-        $boardSecretary = Role::query()->where('code', Role::BOARD_SECRETARY)->first();
-        $boardMember = Role::query()->where('code', Role::BOARD_MEMBER)->first();
-        $accountant = Role::query()->where('code', Role::ACCOUNTANT)->first();
+        $condominiumAdmin = Role::query()->whereNull('condominium_id')->where('code', Role::CONDOMINIUM_ADMIN)->first();
+        $resident = Role::query()->whereNull('condominium_id')->where('code', Role::RESIDENT)->first();
+        $residentOwner = Role::query()->whereNull('condominium_id')->where('code', Role::RESIDENT_OWNER)->first();
+        $residentPayer = Role::query()->whereNull('condominium_id')->where('code', Role::RESIDENT_PAYER)->first();
+        $residentViewer = Role::query()->whereNull('condominium_id')->where('code', Role::RESIDENT_VIEWER)->first();
+        $boardPresident = Role::query()->whereNull('condominium_id')->where('code', Role::BOARD_PRESIDENT)->first();
+        $boardTreasurer = Role::query()->whereNull('condominium_id')->where('code', Role::BOARD_TREASURER)->first();
+        $boardSecretary = Role::query()->whereNull('condominium_id')->where('code', Role::BOARD_SECRETARY)->first();
+        $boardMember = Role::query()->whereNull('condominium_id')->where('code', Role::BOARD_MEMBER)->first();
+        $accountant = Role::query()->whereNull('condominium_id')->where('code', Role::ACCOUNTANT)->first();
 
         $seniorAdmin?->permissions()->sync($permissions->values()->all());
 
@@ -275,6 +276,7 @@ class DatabaseSeeder extends Seeder
             ['code' => Role::RESIDENT_VIEWER, 'name' => 'Residente lector'],
         ] as $role) {
             Role::query()->updateOrCreate([
+                'condominium_id' => null,
                 'code' => $role['code'],
             ], [
                 'name' => $role['name'],
@@ -295,6 +297,7 @@ class DatabaseSeeder extends Seeder
             ['code' => Role::ACCOUNTANT, 'name' => 'Contador externo'],
         ] as $role) {
             Role::query()->updateOrCreate([
+                'condominium_id' => null,
                 'code' => $role['code'],
             ], [
                 'name' => $role['name'],

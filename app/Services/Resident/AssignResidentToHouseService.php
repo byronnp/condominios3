@@ -59,7 +59,7 @@ class AssignResidentToHouseService
         $house->users()->syncWithoutDetaching([
             $user->id => [
                 'relationship_type_id' => $relationshipType->id,
-                'role_id' => $data['role_id'] ?? Role::idForCode($isOwner ? Role::RESIDENT_OWNER : Role::RESIDENT_VIEWER),
+                'role_id' => $data['role_id'] ?? Role::idForCode($isOwner ? Role::RESIDENT_OWNER : Role::RESIDENT_VIEWER, $house->condominium_id),
                 'is_primary' => $isPrimary,
                 'can_receive_notifications' => $data['can_receive_notifications'] ?? true,
                 'approved_at' => Carbon::now(),
